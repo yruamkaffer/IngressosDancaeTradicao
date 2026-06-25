@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "crypto";
+﻿import { createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 
@@ -38,10 +38,19 @@ export function isAdminPassword(password: string) {
 
 export function hasAdminSession() {
   const value = cookies().get(ADMIN_COOKIE_NAME)?.value;
+  if (!value) {
+    return false;
+  }
+
   return safeCompare(value, adminSessionValue());
 }
 
 export function requestHasAdminSession(request: NextRequest) {
   const value = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
+  if (!value) {
+    return false;
+  }
+
   return safeCompare(value, adminSessionValue());
 }
+
