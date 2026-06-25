@@ -1,7 +1,8 @@
-import { eventConfig } from "@/config/event";
+﻿import { eventConfig } from "@/config/event";
 import { requestHasAdminSession } from "@/lib/admin-auth";
 import { fail } from "@/lib/api";
 import { formatPhone, maskCpf } from "@/lib/format";
+import { relationLabel, relationTicketCode } from "@/lib/supabase/relations";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -43,14 +44,13 @@ export async function GET(request: NextRequest) {
   ];
 
   const rows = (data ?? []).map((order) => {
-    const ticket = Array.isArray(order.tickets) ? order.tickets[0] : null;
     return [
       order.reservation_code,
-      ticket?.ticket_code ?? "",
+      relationTicketCode(order.tickets) ?? "",
       order.buyer_name,
       formatPhone(order.buyer_phone),
       maskCpf(order.buyer_cpf),
-      order.seats?.label ?? "",
+      relationLabel(order.seats),
       eventConfig.ticketPrice.toFixed(2),
       order.created_at
     ].map(csvCell);
@@ -65,3 +65,5 @@ export async function GET(request: NextRequest) {
     }
   });
 }
+
+

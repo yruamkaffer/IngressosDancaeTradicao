@@ -1,9 +1,10 @@
-import { CalendarDays, MapPin, QrCode, TicketCheck } from "lucide-react";
+﻿import { CalendarDays, MapPin, QrCode, TicketCheck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
 import { eventConfig } from "@/config/event";
 import { formatCurrency, formatDate, formatPhone, maskCpf } from "@/lib/format";
+import { firstRelation, relationLabel } from "@/lib/supabase/relations";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -28,11 +29,15 @@ async function getTicket(ticketCode: string) {
 export default async function TicketPage({ params }: { params: { ticketCode: string } }) {
   const ticket = await getTicket(params.ticketCode);
 
-  if (!ticket || !ticket.orders) {
+  if (!ticket) {
     notFound();
   }
 
-  const order = ticket.orders;
+  const order = firstRelation(ticket.orders);
+
+  if (!order) {
+    notFound();
+  }
 
   return (
     <main className="container-page flex min-h-screen items-center py-8">
@@ -68,7 +73,7 @@ export default async function TicketPage({ params }: { params: { ticketCode: str
               </div>
               <div>
                 <dt className="text-sm font-bold uppercase text-ink/55">Assento</dt>
-                <dd className="font-bold text-ink">{order.seats?.label}</dd>
+                <dd className="font-bold text-ink">{relationLabel(order.seats)}</dd>
               </div>
               <div>
                 <dt className="text-sm font-bold uppercase text-ink/55">Reserva</dt>
@@ -108,3 +113,5 @@ export default async function TicketPage({ params }: { params: { ticketCode: str
     </main>
   );
 }
+
+

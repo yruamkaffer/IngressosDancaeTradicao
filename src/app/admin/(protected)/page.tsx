@@ -1,9 +1,10 @@
-import { Armchair, Banknote, Lock, TicketCheck, Timer, WalletCards } from "lucide-react";
+﻿import { Armchair, Banknote, Lock, TicketCheck, Timer, WalletCards } from "lucide-react";
 import Link from "next/link";
 import { ReservationActions } from "@/components/ReservationActions";
 import { StatusBadge } from "@/components/StatusBadge";
 import { eventConfig } from "@/config/event";
 import { formatCurrency, formatPhone, maskCpf } from "@/lib/format";
+import { relationLabel, relationTicketCode } from "@/lib/supabase/relations";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type { AdminOrder, Seat } from "@/types/domain";
 
@@ -120,7 +121,7 @@ export default async function AdminDashboardPage() {
                       <div className="text-sm text-ink/65">{formatPhone(order.buyer_phone)}</div>
                       <div className="text-sm text-ink/65">{maskCpf(order.buyer_cpf)}</div>
                     </td>
-                    <td className="font-bold text-ink">{order.seats?.label}</td>
+                    <td className="font-bold text-ink">{relationLabel(order.seats)}</td>
                     <td>
                       <ReservationActions orderId={order.id} />
                     </td>
@@ -155,15 +156,14 @@ export default async function AdminDashboardPage() {
               </thead>
               <tbody>
                 {paidOrders.slice(0, 6).map((order) => {
-                  const ticket = Array.isArray(order.tickets) ? order.tickets[0] : null;
                   return (
                     <tr key={order.id}>
                       <td className="font-bold text-ink">{order.buyer_name}</td>
-                      <td className="font-bold text-ink">{order.seats?.label}</td>
+                      <td className="font-bold text-ink">{relationLabel(order.seats)}</td>
                       <td>
                         <StatusBadge status={order.status} />
                       </td>
-                      <td>{ticket?.ticket_code ?? "-"}</td>
+                      <td>{relationTicketCode(order.tickets) ?? "-"}</td>
                     </tr>
                   );
                 })}
@@ -182,3 +182,5 @@ export default async function AdminDashboardPage() {
     </div>
   );
 }
+
+

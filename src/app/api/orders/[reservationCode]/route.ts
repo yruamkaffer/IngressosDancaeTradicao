@@ -1,6 +1,7 @@
-import { eventConfig } from "@/config/event";
+﻿import { eventConfig } from "@/config/event";
 import { fail, ok } from "@/lib/api";
 import { formatPhone, maskCpf } from "@/lib/format";
+import { firstRelation, relationTicketCode } from "@/lib/supabase/relations";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type { NextRequest } from "next/server";
 
@@ -30,8 +31,6 @@ export async function GET(
     return fail("Reserva nao encontrada.", 404);
   }
 
-  const ticket = Array.isArray(data.tickets) ? data.tickets[0] : null;
-
   return ok({
     id: data.id,
     status: data.status,
@@ -39,8 +38,10 @@ export async function GET(
     buyerName: data.buyer_name,
     buyerPhone: formatPhone(data.buyer_phone),
     buyerCpfMasked: maskCpf(data.buyer_cpf),
-    seat: data.seats,
-    ticketCode: ticket?.ticket_code ?? null,
+    seat: firstRelation(data.seats),
+    ticketCode: relationTicketCode(data.tickets),
     createdAt: data.created_at
   });
 }
+
+

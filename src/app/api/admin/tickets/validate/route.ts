@@ -1,6 +1,7 @@
-import { requestHasAdminSession } from "@/lib/admin-auth";
+﻿import { requestHasAdminSession } from "@/lib/admin-auth";
 import { fail, friendlyDatabaseError, ok } from "@/lib/api";
 import { maskCpf } from "@/lib/format";
+import { relationLabel } from "@/lib/supabase/relations";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type { NextRequest } from "next/server";
 
@@ -48,6 +49,7 @@ export async function POST(request: NextRequest) {
     usedAt: validation.used_at,
     buyerName: order?.buyer_name ?? "",
     buyerCpfMasked: order?.buyer_cpf ? maskCpf(order.buyer_cpf) : "",
-    seatLabel: order?.seats?.label ?? ""
+    seatLabel: relationLabel(order?.seats)
   });
 }
+

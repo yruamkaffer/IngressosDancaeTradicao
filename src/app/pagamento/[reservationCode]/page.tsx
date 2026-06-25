@@ -1,10 +1,11 @@
-import { ArrowLeft, MessageCircle, TicketCheck } from "lucide-react";
+﻿import { ArrowLeft, MessageCircle, TicketCheck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/CopyButton";
 import { StatusBadge } from "@/components/StatusBadge";
 import { eventConfig } from "@/config/event";
 import { buildWhatsAppUrl, formatCurrency, formatPhone, maskCpf } from "@/lib/format";
+import { firstRelation, relationTicketCode } from "@/lib/supabase/relations";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -33,13 +34,14 @@ export default async function PagamentoPage({
   params: { reservationCode: string };
 }) {
   const order = await getOrder(params.reservationCode);
+  const seat = firstRelation(order?.seats);
 
-  if (!order || !order.seats) {
+  if (!order || !seat) {
     notFound();
   }
 
-  const ticket = Array.isArray(order.tickets) ? order.tickets[0] : null;
-  const seatLabel = order.seats.label;
+  const ticketCode = relationTicketCode(order.tickets);
+  const seatLabel = seat.label;
   const whatsappUrl = buildWhatsAppUrl({
     buyerName: order.buyer_name,
     buyerCpf: order.buyer_cpf,
@@ -65,11 +67,11 @@ export default async function PagamentoPage({
             <StatusBadge status={order.status} />
           </div>
 
-          {ticket?.ticket_code && (
+          {ticketCode && (
             <div className="mb-5 rounded-lg border border-teal/25 bg-teal/10 p-4 text-teal">
               <div className="font-black">Pagamento confirmado.</div>
               <p className="mt-1 text-sm text-ink/75">Seu ticket ja esta liberado.</p>
-              <Link href={`/ticket/${ticket.ticket_code}`} className="btn btn-primary mt-3">
+              <Link href={`/ticket/${ticketCode}`} className="btn btn-primary mt-3">
                 <TicketCheck className="h-4 w-4" />
                 Abrir ticket
               </Link>
@@ -127,3 +129,5 @@ export default async function PagamentoPage({
     </main>
   );
 }
+
+

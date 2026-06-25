@@ -1,7 +1,8 @@
-import { createHash } from "crypto";
+﻿import { createHash } from "crypto";
 import { AdminReservationsClient, type AdminReservationRow } from "@/components/AdminReservationsClient";
 import { eventConfig } from "@/config/event";
 import { formatPhone, maskCpf } from "@/lib/format";
+import { relationLabel, relationTicketCode } from "@/lib/supabase/relations";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type { AdminOrder } from "@/types/domain";
 
@@ -24,7 +25,6 @@ async function getOrders() {
   }
 
   return ((data ?? []) as AdminOrder[]).map<AdminReservationRow>((order) => {
-    const ticket = Array.isArray(order.tickets) ? order.tickets[0] : null;
     return {
       id: order.id,
       reservationCode: order.reservation_code,
@@ -32,9 +32,9 @@ async function getOrders() {
       buyerPhone: formatPhone(order.buyer_phone),
       buyerCpfMasked: maskCpf(order.buyer_cpf),
       buyerCpfHash: hashCpf(order.buyer_cpf),
-      seatLabel: order.seats?.label ?? "",
+      seatLabel: relationLabel(order.seats),
       status: order.status,
-      ticketCode: ticket?.ticket_code ?? null,
+      ticketCode: relationTicketCode(order.tickets),
       createdAt: order.created_at
     };
   });
@@ -44,3 +44,5 @@ export default async function AdminReservasPage() {
   const orders = await getOrders();
   return <AdminReservationsClient orders={orders} ticketPrice={eventConfig.ticketPrice} />;
 }
+
+
