@@ -35,11 +35,11 @@ const balconyRows = Array.from("ABCDEFGH");
 const officialSectors = new Set(["Plateia esquerda", "Plateia central", "Plateia direita", "2º piso"]);
 
 const mainFloor: TheaterSection[] = [
-  { type: "seats", sector: "Plateia esquerda", title: "Esquerda", columns: 6, rows: mainRows },
+  { type: "seats", sector: "Plateia esquerda", title: "Plateia esquerda", columns: 6, rows: mainRows },
   { type: "aisle", title: "Corredor" },
-  { type: "seats", sector: "Plateia central", title: "Centro", columns: 20, rows: mainRows },
+  { type: "seats", sector: "Plateia central", title: "Plateia central", columns: 20, rows: mainRows },
   { type: "aisle", title: "Corredor" },
-  { type: "seats", sector: "Plateia direita", title: "Direita", columns: 6, rows: mainRows }
+  { type: "seats", sector: "Plateia direita", title: "Plateia direita", columns: 6, rows: mainRows }
 ];
 
 const balcony: SeatSection = {
@@ -67,7 +67,7 @@ function formatSeatNumber(number: number) {
 }
 
 function sectionWidth(columns: number) {
-  return `${columns * 1.65 + Math.max(columns - 1, 0) * 0.2 + 2.2}rem`;
+  return `${columns * 1.7 + Math.max(columns - 1, 0) * 0.25 + 2.6}rem`;
 }
 
 function rowSort(left: string, right: string) {
@@ -135,6 +135,7 @@ export function SeatMap({
   }, [seats]);
 
   const hasOfficialSeats = seats.some((seat) => officialSectors.has(seat.sector));
+  const mainSeatSections = mainFloor.filter((section): section is SeatSection => section.type === "seats");
 
   function renderSeatButton(seat: Seat | undefined, fallbackNumber: number, emptyKey: string) {
     if (!seat) {
@@ -210,21 +211,26 @@ export function SeatMap({
     return (
       <div
         key={section.sector}
-        className="rounded-lg border border-line bg-white/85 p-3"
+        className="mx-auto rounded-lg border border-line bg-white/90 p-3 shadow-sm"
         style={{ width: sectionWidth(section.columns) }}
       >
-        <div className="mb-3 text-center text-xs font-black uppercase tracking-[0.14em] text-curtain">
-          {section.title}
+        <div className="mb-3 flex items-center justify-between gap-3 border-b border-line pb-2">
+          <div className="text-xs font-black uppercase tracking-[0.14em] text-curtain">
+            {section.title}
+          </div>
+          <div className="text-[11px] font-bold text-ink/50">
+            {section.rows.length * section.columns} lugares
+          </div>
         </div>
         <div className="space-y-1.5">
           {section.rows.map((row) => {
             const rowSeats = seatsBySectorRow.get(sectorRowKey(section.sector, row)) ?? [];
             return (
-              <div key={`${section.sector}-${row}`} className="grid grid-cols-[1.65rem_1fr] items-center gap-2">
+              <div key={`${section.sector}-${row}`} className="grid grid-cols-[1.6rem_1fr] items-center gap-2">
                 <div className="text-center text-[11px] font-black text-curtain">{row}</div>
                 <div
                   className="grid gap-1"
-                  style={{ gridTemplateColumns: `repeat(${section.columns}, minmax(1.6rem, 1.6rem))` }}
+                  style={{ gridTemplateColumns: `repeat(${section.columns}, minmax(1.7rem, 1.7rem))` }}
                 >
                   {Array.from({ length: section.columns }, (_, index) =>
                     renderSeatButton(rowSeats[index], index + 1, `${section.sector}-${row}-${index}`)
@@ -238,60 +244,68 @@ export function SeatMap({
     );
   }
 
+  function renderStackedSection(section: SeatSection) {
+    return (
+      <div key={section.sector} className="w-full overflow-x-auto pb-1">
+        <div className="min-w-max px-1">
+          {renderSeatSection(section)}
+        </div>
+      </div>
+    );
+  }
+
+  function renderAisle(index: number) {
+    return (
+      <div
+        key={`aisle-${index}`}
+        className="mx-auto flex h-9 w-full max-w-3xl items-center justify-center rounded-md border border-dashed border-line bg-mist/70 text-[10px] font-black uppercase tracking-[0.16em] text-ink/50"
+      >
+        Corredor
+      </div>
+    );
+  }
+
   if (!hasOfficialSeats && legacySections.length > 0) {
     return (
-      <div className="w-full max-w-full overflow-x-auto rounded-lg border border-line bg-white/70 p-4">
-        <div className="inline-block min-w-full align-top">
-          <div className="mx-auto mb-5 rounded-md border border-curtain/20 bg-gradient-to-r from-curtain via-rose to-stage px-4 py-3 text-center text-sm font-bold uppercase tracking-[0.18em] text-white">
-            PALCO
-          </div>
-          <div className="flex w-max max-w-none gap-4">
-            {legacySections.map((section) => renderSeatSection(section))}
-          </div>
-          <div className="mt-4 text-center text-xs font-bold text-ink/55">
-            Mapa temporário com {seats.length} assentos carregados.
-          </div>
+      <div className="w-full overflow-hidden rounded-lg border border-line bg-white/70 p-4">
+        <div className="mb-5 rounded-md border border-curtain/20 bg-gradient-to-r from-curtain via-rose to-stage px-4 py-3 text-center text-sm font-bold uppercase tracking-[0.18em] text-white">
+          PALCO
+        </div>
+        <div className="space-y-4">
+          {legacySections.map((section) => renderStackedSection(section))}
+        </div>
+        <div className="mt-4 text-center text-xs font-bold text-ink/55">
+          Mapa temporario com {seats.length} assentos carregados.
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-full overflow-x-auto rounded-lg border border-line bg-white/70 p-4">
-      <div className="w-max max-w-none align-top">
-        <div className="mx-auto mb-5 max-w-4xl rounded-md border border-curtain/20 bg-gradient-to-r from-curtain via-rose to-stage px-4 py-3 text-center text-sm font-bold uppercase tracking-[0.18em] text-white">
-          PALCO
-        </div>
+    <div className="w-full overflow-hidden rounded-lg border border-line bg-white/70 p-3 sm:p-4 lg:p-5">
+      <div className="mb-5 rounded-md border border-curtain/20 bg-gradient-to-r from-curtain via-rose to-stage px-4 py-3 text-center text-sm font-bold uppercase tracking-[0.18em] text-white">
+        PALCO
+      </div>
 
-        <div className="flex items-stretch justify-center gap-3">
-          {mainFloor.map((section, index) =>
-            section.type === "aisle" ? (
-              <div
-                key={`${section.title}-${index}`}
-                className="flex w-12 items-center justify-center rounded-lg border border-dashed border-line bg-mist/70 text-[10px] font-black uppercase tracking-[0.16em] text-ink/50 [writing-mode:vertical-rl]"
-              >
-                {section.title}
-              </div>
-            ) : (
-              renderSeatSection(section)
-            )
-          )}
-        </div>
-
-        <div className="mt-6 rounded-lg border-2 border-rose/55 bg-white/85 p-4">
-          <div className="mb-3 text-center text-sm font-black uppercase tracking-[0.16em] text-rose">
-            2º piso
+      <div className="space-y-4">
+        {mainSeatSections.map((section, index) => (
+          <div key={section.sector} className="space-y-4">
+            {index > 0 && renderAisle(index)}
+            {renderStackedSection(section)}
           </div>
-          <div className="flex justify-center">{renderSeatSection(balcony)}</div>
-        </div>
+        ))}
 
-        <div className="mt-4 flex flex-wrap justify-center gap-3 text-xs font-bold text-ink/55">
-          <span>Plateia esquerda: 96 lugares</span>
-          <span>Plateia central: 320 lugares</span>
-          <span>Plateia direita: 96 lugares</span>
-          <span>2º piso: 128 lugares</span>
-          <span>Total: {seats.length || 640} lugares</span>
+        <div className="rounded-lg border-2 border-rose/55 bg-white/85 p-3 sm:p-4">
+          {renderStackedSection(balcony)}
         </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap justify-center gap-3 text-xs font-bold text-ink/55">
+        <span>Plateia esquerda: 96 lugares</span>
+        <span>Plateia central: 320 lugares</span>
+        <span>Plateia direita: 96 lugares</span>
+        <span>2º piso: 128 lugares</span>
+        <span>Total: {seats.length || 640} lugares</span>
       </div>
     </div>
   );

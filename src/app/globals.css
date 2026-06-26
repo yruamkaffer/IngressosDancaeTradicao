@@ -43,6 +43,11 @@ textarea:focus-visible {
   margin-inline: auto;
 }
 
+
+.container-purchase {
+  width: min(1480px, calc(100% - 24px));
+  margin-inline: auto;
+}
 .card {
   border: 1px solid rgba(23, 20, 42, 0.1);
   border-radius: 8px;

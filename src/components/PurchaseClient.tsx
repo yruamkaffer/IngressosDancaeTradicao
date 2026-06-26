@@ -86,19 +86,26 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
   }
 
   return (
-    <div className="grid min-w-0 gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
-      <form onSubmit={handleSubmit} className="card h-fit min-w-0 p-5">
-        <div className="mb-5 flex items-center gap-3">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-curtain text-white">
-            <UserRound className="h-5 w-5" />
-          </span>
-          <div>
-            <h1 className="text-2xl font-bold text-ink">Comprar ingresso</h1>
-            <p className="text-sm text-ink/65">{formatCurrency(eventConfig.ticketPrice)} por assento</p>
+    <div className="grid min-w-0 gap-6">
+      <form onSubmit={handleSubmit} className="card min-w-0 p-5 lg:p-6">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-curtain text-white">
+              <UserRound className="h-5 w-5" />
+            </span>
+            <div>
+              <h1 className="text-2xl font-bold text-ink">Comprar ingresso</h1>
+              <p className="text-sm text-ink/65">{formatCurrency(eventConfig.ticketPrice)} por assento</p>
+            </div>
+          </div>
+          <div className="rounded-md border border-line bg-mist px-4 py-3 text-sm text-ink/75 lg:text-right">
+            <div className="font-bold text-ink">Assento escolhido</div>
+            {selectedSeat ? <div>{selectedSeat.label}</div> : <div>Selecione no mapa abaixo.</div>}
+            {errors.seatId && <span className="mt-1 block text-sm text-rose">{errors.seatId}</span>}
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="grid gap-4 lg:grid-cols-3">
           <label className="block">
             <span className="mb-1 block text-sm font-bold text-ink">Nome completo</span>
             <input
@@ -118,7 +125,7 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
               onChange={(event) => setBuyerPhone(event.target.value)}
               inputMode="tel"
               autoComplete="tel"
-              placeholder="DDD + número"
+              placeholder="DDD + numero"
             />
             {errors.buyerPhone && (
               <span className="mt-1 block text-sm text-rose">{errors.buyerPhone}</span>
@@ -133,40 +140,36 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
               onChange={(event) => setBuyerCpf(event.target.value)}
               inputMode="numeric"
               autoComplete="off"
-              placeholder="Somente números"
+              placeholder="Somente numeros"
             />
             {errors.buyerCpf && <span className="mt-1 block text-sm text-rose">{errors.buyerCpf}</span>}
           </label>
+        </div>
 
-          <div className="rounded-lg border border-line bg-mist p-3 text-sm text-ink/75">
-            <div className="font-bold text-ink">Assento escolhido</div>
-            {selectedSeat ? (
-              <div>{selectedSeat.label}</div>
-            ) : (
-              <div>Selecione um assento disponível no mapa.</div>
-            )}
-            {errors.seatId && <span className="mt-1 block text-sm text-rose">{errors.seatId}</span>}
-          </div>
-
-          {message && (
+        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px] lg:items-stretch">
+          {message ? (
             <div className="rounded-lg border border-rose/25 bg-rose/10 p-3 text-sm text-rose">
               {message}
             </div>
+          ) : (
+            <div className="rounded-lg border border-line bg-white/70 p-3 text-sm text-ink/65">
+              Reservas ficam pendentes ate validacao manual.
+            </div>
           )}
 
-          <button type="submit" disabled={loading} className="btn btn-primary w-full">
+          <button type="submit" disabled={loading} className="btn btn-primary min-h-[52px] w-full">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
             Reservar assento
           </button>
         </div>
       </form>
 
-      <section className="card min-w-0 overflow-hidden p-5">
-        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <section className="card min-w-0 overflow-hidden p-4 lg:p-6">
+        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h2 className="text-xl font-bold text-ink">Mapa do teatro</h2>
             <p className="text-sm text-ink/65">
-              {availableCount} assentos disponíveis. Reservas ficam pendentes até validação manual.
+              {availableCount} assentos disponiveis. Reservas ficam pendentes ate validacao manual.
             </p>
           </div>
           <SeatLegend />
