@@ -6,6 +6,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET(
   _request: NextRequest,
@@ -17,31 +18,36 @@ export async function GET(
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id,event_id,seat_id,buyer_name,buyer_phone,buyer_cpf,reservation_code,status,created_at,updated_at,seats(id,label,row,number,status),tickets(id,ticket_code,used_at,created_at)"
+      "id,event_id,seat_id,buyer_name,buyer_phone,buyer_cpf,buyer_email,reservation_code,status,created_at,updated_at,seats(id,label,row,number,status),tickets(id,ticket_code,used_at,created_at)"
     )
     .eq("event_id", eventConfig.id)
     .eq("reservation_code", reservationCode)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
 
   if (error) {
     return fail("Nao foi possivel buscar a reserva.", 500, error.message);
   }
 
-  if (!data) {
-    return fail("Reserva não encontrada.", 404);
+  const orders = data ?? [];
+  const firstOrder = orders[0];
+
+  if (!firstOrder) {
+    return fail("Reserva nao encontrada.", 404);
   }
 
+  const allPaid = orders.every((order) => order.status === "paid");
+  const allCancelled = orders.every((order) => order.status === "cancelled");
+
   return ok({
-    id: data.id,
-    status: data.status,
-    reservationCode: data.reservation_code,
-    buyerName: data.buyer_name,
-    buyerPhone: formatPhone(data.buyer_phone),
-    buyerCpfMasked: maskCpf(data.buyer_cpf),
-    seat: firstRelation(data.seats),
-    ticketCode: relationTicketCode(data.tickets),
-    createdAt: data.created_at
+    id: firstOrder.id,
+    status: allPaid ? "paid" : allCancelled ? "cancelled" : "pending_payment",
+    reservationCode: firstOrder.reservation_code,
+    buyerName: firstOrder.buyer_name,
+    buyerPhone: formatPhone(firstOrder.buyer_phone),
+    buyerEmail: firstOrder.buyer_email,
+    buyerCpfMasked: maskCpf(firstOrder.buyer_cpf),
+    seats: orders.map((order) => firstRelation(order.seats)).filter(Boolean),
+    ticketCodes: orders.map((order) => relationTicketCode(order.tickets)).filter(Boolean),
+    createdAt: firstOrder.created_at
   });
 }
-
-

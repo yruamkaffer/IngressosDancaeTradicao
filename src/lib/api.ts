@@ -20,20 +20,26 @@ export function friendlyDatabaseError(message?: string) {
     return "Nao foi possivel concluir a operacao. Tente novamente.";
   }
 
+  if (message.includes("INVALID_SEAT_COUNT")) {
+    return "Escolha de 1 a 5 assentos por compra.";
+  }
+  if (message.includes("INVALID_BUYER_DATA")) {
+    return "Revise os dados do comprador.";
+  }
   if (message.includes("SEAT_NOT_AVAILABLE")) {
-    return "Esse assento acabou de ficar indisponível. Escolha outro assento.";
+    return "Esse assento acabou de ficar indisponivel. Escolha outro assento.";
   }
   if (message.includes("SEAT_NOT_FOUND")) {
-    return "Assento não encontrado.";
+    return "Assento nao encontrado.";
   }
   if (message.includes("ORDER_NOT_FOUND")) {
-    return "Reserva não encontrada.";
+    return "Reserva nao encontrada.";
   }
   if (message.includes("ORDER_NOT_PENDING")) {
     return "Somente reservas aguardando pagamento podem ser alteradas.";
   }
   if (message.includes("TICKET_NOT_FOUND")) {
-    return "Ticket não encontrado.";
+    return "Ticket nao encontrado.";
   }
 
   return message;

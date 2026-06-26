@@ -1,4 +1,4 @@
-﻿import { eventConfig } from "@/config/event";
+import { eventConfig } from "@/config/event";
 import { requestHasAdminSession } from "@/lib/admin-auth";
 import { fail } from "@/lib/api";
 import { formatPhone, maskCpf } from "@/lib/format";
@@ -8,6 +8,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function csvCell(value: unknown) {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id,buyer_name,buyer_phone,buyer_cpf,reservation_code,status,created_at,seats(label),tickets(ticket_code,used_at)"
+      "id,buyer_name,buyer_phone,buyer_cpf,buyer_email,reservation_code,status,created_at,seats(label),tickets(ticket_code,used_at)"
     )
     .eq("event_id", eventConfig.id)
     .eq("status", "paid")
@@ -37,6 +38,7 @@ export async function GET(request: NextRequest) {
     "ticket",
     "nome",
     "telefone",
+    "email",
     "cpf_mascarado",
     "assento",
     "valor",
@@ -49,6 +51,7 @@ export async function GET(request: NextRequest) {
       relationTicketCode(order.tickets) ?? "",
       order.buyer_name,
       formatPhone(order.buyer_phone),
+      order.buyer_email ?? "",
       maskCpf(order.buyer_cpf),
       relationLabel(order.seats),
       eventConfig.ticketPrice.toFixed(2),
@@ -65,5 +68,3 @@ export async function GET(request: NextRequest) {
     }
   });
 }
-
-

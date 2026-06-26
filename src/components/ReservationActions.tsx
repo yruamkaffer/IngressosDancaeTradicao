@@ -24,6 +24,10 @@ export function ReservationActions({ orderId }: { orderId: string }) {
       return;
     }
 
+    if (action === "confirm" && payload.data?.email?.ok === false) {
+      window.alert(payload.data.email.reason ?? "Pagamento confirmado, mas o email do ticket nao foi enviado.");
+    }
+
     router.refresh();
   }
 

@@ -1,4 +1,4 @@
-import { CalendarDays, Facebook, Instagram, MapPin, Phone, ShieldCheck, Ticket, WalletCards } from "lucide-react";
+import { CalendarDays, Clock, Facebook, Instagram, MapPin, Phone, ShieldCheck, Ticket } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { eventConfig } from "@/config/event";
@@ -79,22 +79,18 @@ export default function HomePage() {
         </section>
 
         <section id="detalhes" className="container-page py-10">
-          <div className="grid gap-5 md:grid-cols-4">
+          <div className="grid gap-5 md:grid-cols-3">
             <div className="card p-5">
               <CalendarDays className="mb-3 h-5 w-5 text-curtain" />
               <div className="text-sm font-bold uppercase text-ink/55">Data</div>
               <div className="mt-1 font-bold text-ink">{formatDate(eventConfig.date)}</div>
             </div>
             <div className="card p-5">
-              <WalletCards className="mb-3 h-5 w-5 text-stage" />
+              <Clock className="mb-3 h-5 w-5 text-stage" />
               <div className="text-sm font-bold uppercase text-ink/55">Horário</div>
               <div className="mt-1 font-bold text-ink">{eventConfig.time}</div>
             </div>
-            <div className="card p-5">
-              <MapPin className="mb-3 h-5 w-5 text-teal" />
-              <div className="text-sm font-bold uppercase text-ink/55">Local</div>
-              <div className="mt-1 font-bold text-ink">{eventConfig.location}</div>
-            </div>
+
             <div className="card p-5">
               <Ticket className="mb-3 h-5 w-5 text-rose" />
               <div className="text-sm font-bold uppercase text-ink/55">Ingresso</div>
@@ -216,17 +212,17 @@ export default function HomePage() {
             <div>
               <h2 className="text-3xl font-black text-ink">Reserva manual, simples e segura</h2>
               <p className="mt-3 max-w-2xl leading-7 text-ink/72">
-                Escolha seu assento numerado, reserve, pague via Pix Nubank e envie o comprovante pelo WhatsApp.
-                A organização valida o pagamento manualmente antes de liberar o ticket.
+                Escolha de 1 a 5 assentos numerados, reserve e pague via Pix. Para pagamento em dinheiro,
+                compre diretamente na escola. A organização valida o pagamento manualmente antes de liberar o ticket.
               </p>
             </div>
             <div className="card p-5">
               <div className="text-sm font-bold uppercase text-curtain">Fluxo do ingresso</div>
               <ol className="mt-3 space-y-2 text-sm text-ink/75">
-                <li>1. Preencha seus dados e escolha um assento disponível.</li>
-                <li>2. Reserve e pague pelo Pix informado na tela.</li>
+                <li>1. Preencha seus dados, email e escolha ate 5 assentos disponiveis.</li>
+                <li>2. Reserve e pague somente pelo Pix informado na tela.</li>
                 <li>3. Envie o comprovante no WhatsApp da organização.</li>
-                <li>4. O admin confirma o pagamento e o ticket é liberado.</li>
+                <li>4. O admin confirma o pagamento e o PDF do ticket é enviado por email.</li>
               </ol>
               <Link href="/comprar" className="btn btn-primary mt-5 w-full">
                 <Ticket className="h-4 w-4" />

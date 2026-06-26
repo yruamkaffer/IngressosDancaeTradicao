@@ -52,18 +52,24 @@ export function buildWhatsAppUrl(input: {
   buyerName: string;
   buyerCpf: string;
   buyerPhone: string;
-  seatLabel: string;
+  buyerEmail?: string | null;
+  seatLabel?: string;
+  seatLabels?: string[];
   reservationCode: string;
 }) {
+  const labels = input.seatLabels?.length ? input.seatLabels.join(", ") : input.seatLabel ?? "";
   const message = [
-    `Olá! Fiz a reserva do ingresso para ${eventConfig.name}.`,
+    `Ola! Fiz a reserva do ingresso para ${eventConfig.name}.`,
     `Nome: ${input.buyerName}`,
     `CPF: ${maskCpf(input.buyerCpf)}`,
     `Telefone: ${formatPhone(input.buyerPhone)}`,
-    `Assento: ${input.seatLabel}`,
+    input.buyerEmail ? `Email: ${input.buyerEmail}` : null,
+    `Assentos: ${labels}`,
     `Codigo da reserva: ${input.reservationCode}`,
     "Segue o comprovante do Pix."
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   return `https://wa.me/${eventConfig.whatsappPhone}?text=${encodeURIComponent(message)}`;
 }
@@ -79,7 +85,7 @@ export function orderStatusLabel(status: string) {
 
 export function seatStatusLabel(status: string) {
   const labels: Record<string, string> = {
-    available: "Disponível",
+    available: "Disponivel",
     reserved: "Reservado",
     sold: "Vendido",
     blocked: "Bloqueado"

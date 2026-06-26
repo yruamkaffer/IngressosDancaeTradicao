@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-
 export const metadata: Metadata = {
   title: "Sob a Luz da Dança | Ingressos",
-  description: "MVP para venda manual de ingressos com Pix e validação via WhatsApp."
+  description: "Venda de ingressos com reserva de assentos, pagamento via Pix e validação manual."
 };
 
 export default function RootLayout({
@@ -18,4 +17,3 @@ export default function RootLayout({
     </html>
   );
 }
-

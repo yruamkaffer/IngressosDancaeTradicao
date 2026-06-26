@@ -14,7 +14,7 @@ values (
   '2026-11-15',
   '20:00',
   'Teatro CENSUPEG (antigo Teatro da CNEC)',
-  80.00
+  30.00
 )
 on conflict (id) do update set
   name = excluded.name,

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Loader2, UserRound } from "lucide-react";
+import { ArrowRight, Loader2, Mail, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { eventConfig } from "@/config/event";
@@ -11,16 +11,17 @@ import { SeatLegend } from "./SeatLegend";
 import { SeatMap } from "./SeatMap";
 
 type ApiResponse =
-  | { ok: true; data: { reservationCode: string } }
+  | { ok: true; data: { reservationCode: string; seatCount: number } }
   | { ok: false; error: string; details?: Record<string, string> };
 
 export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
   const router = useRouter();
   const [seats, setSeats] = useState(initialSeats);
-  const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);
+  const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
   const [buyerName, setBuyerName] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
   const [buyerCpf, setBuyerCpf] = useState("");
+  const [buyerEmail, setBuyerEmail] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,16 +31,40 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
     [seats]
   );
 
+  const selectedSeatIds = useMemo(() => selectedSeats.map((seat) => seat.id), [selectedSeats]);
+  const selectedSeatLabels = selectedSeats.map((seat) => seat.label).join(", ");
+  const totalPrice = selectedSeats.length * eventConfig.ticketPrice;
+
   async function refreshSeats() {
     const response = await fetch("/api/seats", { cache: "no-store" });
     const payload = await response.json();
     if (payload.ok) {
-      setSeats(payload.data.seats);
-      const freshSelected = payload.data.seats.find((seat: Seat) => seat.id === selectedSeat?.id);
-      if (freshSelected?.status !== "available") {
-        setSelectedSeat(null);
-      }
+      const freshSeats = payload.data.seats as Seat[];
+      setSeats(freshSeats);
+      setSelectedSeats((current) =>
+        current
+          .map((selected) => freshSeats.find((seat) => seat.id === selected.id))
+          .filter((seat): seat is Seat => Boolean(seat && seat.status === "available"))
+      );
     }
+  }
+
+  function handleSeatSelect(seat: Seat) {
+    setMessage("");
+    setErrors((current) => ({ ...current, seatIds: "", seatId: "" }));
+
+    setSelectedSeats((current) => {
+      if (current.some((selected) => selected.id === seat.id)) {
+        return current.filter((selected) => selected.id !== seat.id);
+      }
+
+      if (current.length >= eventConfig.maxSeatsPerOrder) {
+        setMessage(`Voce pode selecionar no maximo ${eventConfig.maxSeatsPerOrder} assentos por compra.`);
+        return current;
+      }
+
+      return [...current, seat].sort((left, right) => left.label.localeCompare(right.label, "pt-BR"));
+    });
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -50,7 +75,8 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
       buyerName,
       buyerPhone,
       buyerCpf,
-      seatId: selectedSeat?.id
+      buyerEmail,
+      seatIds: selectedSeatIds
     });
 
     if (!parsed.ok) {
@@ -66,10 +92,11 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         eventId: eventConfig.id,
-        seatId: parsed.data.seatId,
+        seatIds: parsed.data.seatIds,
         buyerName: parsed.data.buyerName,
         buyerPhone: parsed.data.buyerPhone,
-        buyerCpf: parsed.data.buyerCpf
+        buyerCpf: parsed.data.buyerCpf,
+        buyerEmail: parsed.data.buyerEmail
       })
     });
 
@@ -95,18 +122,29 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
             </span>
             <div>
               <h1 className="text-2xl font-bold text-ink">Comprar ingresso</h1>
-              <p className="text-sm text-ink/65">{formatCurrency(eventConfig.ticketPrice)} por assento</p>
+              <p className="text-sm text-ink/65">
+                {formatCurrency(eventConfig.ticketPrice)} por assento, ate {eventConfig.maxSeatsPerOrder} por compra
+              </p>
             </div>
           </div>
-          <div className="rounded-md border border-line bg-mist px-4 py-3 text-sm text-ink/75 lg:text-right">
-            <div className="font-bold text-ink">Assento escolhido</div>
-            {selectedSeat ? <div>{selectedSeat.label}</div> : <div>Selecione no mapa abaixo.</div>}
-            {errors.seatId && <span className="mt-1 block text-sm text-rose">{errors.seatId}</span>}
+          <div className="rounded-md border border-line bg-mist px-4 py-3 text-sm text-ink/75 lg:max-w-md lg:text-right">
+            <div className="font-bold text-ink">Assentos escolhidos</div>
+            {selectedSeats.length > 0 ? (
+              <>
+                <div>{selectedSeatLabels}</div>
+                <div className="mt-1 font-black text-curtain">Total: {formatCurrency(totalPrice)}</div>
+              </>
+            ) : (
+              <div>Selecione de 1 a {eventConfig.maxSeatsPerOrder} assentos no mapa abaixo.</div>
+            )}
+            {(errors.seatIds || errors.seatId) && (
+              <span className="mt-1 block text-sm text-rose">{errors.seatIds ?? errors.seatId}</span>
+            )}
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          <label className="block">
+        <div className="grid gap-4 lg:grid-cols-4">
+          <label className="block lg:col-span-2">
             <span className="mb-1 block text-sm font-bold text-ink">Nome completo</span>
             <input
               className="input"
@@ -144,22 +182,46 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
             />
             {errors.buyerCpf && <span className="mt-1 block text-sm text-rose">{errors.buyerCpf}</span>}
           </label>
+
+          <label className="block lg:col-span-2">
+            <span className="mb-1 block text-sm font-bold text-ink">Email para receber o ticket</span>
+            <input
+              className="input"
+              value={buyerEmail}
+              onChange={(event) => setBuyerEmail(event.target.value)}
+              inputMode="email"
+              type="email"
+              autoComplete="email"
+              placeholder="seuemail@exemplo.com"
+            />
+            {errors.buyerEmail && <span className="mt-1 block text-sm text-rose">{errors.buyerEmail}</span>}
+          </label>
+
+          <div className="flex items-end lg:col-span-2">
+            <div className="w-full rounded-lg border border-line bg-white/70 p-3 text-sm leading-6 text-ink/65">
+              <div className="mb-1 flex items-center gap-2 font-bold text-ink">
+                <Mail className="h-4 w-4 text-stage" />
+                Envio do ticket
+              </div>
+              O PDF sera enviado para este email apos validacao manual do pagamento.
+            </div>
+          </div>
         </div>
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px] lg:items-stretch">
+        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-stretch">
           {message ? (
             <div className="rounded-lg border border-rose/25 bg-rose/10 p-3 text-sm text-rose">
               {message}
             </div>
           ) : (
             <div className="rounded-lg border border-line bg-white/70 p-3 text-sm text-ink/65">
-              Reservas ficam pendentes ate validacao manual.
+              {eventConfig.pixInstructions}
             </div>
           )}
 
           <button type="submit" disabled={loading} className="btn btn-primary min-h-[52px] w-full">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-            Reservar assento
+            Reservar {selectedSeats.length > 1 ? "assentos" : "assento"}
           </button>
         </div>
       </form>
@@ -169,7 +231,7 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
           <div>
             <h2 className="text-xl font-bold text-ink">Mapa do teatro</h2>
             <p className="text-sm text-ink/65">
-              {availableCount} assentos disponiveis. Reservas ficam pendentes ate validacao manual.
+              {availableCount} assentos disponiveis. Selecione ate {eventConfig.maxSeatsPerOrder} lugares.
             </p>
           </div>
           <SeatLegend />
@@ -177,8 +239,8 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
 
         <SeatMap
           seats={seats}
-          selectedSeatId={selectedSeat?.id}
-          onSelect={(seat) => setSelectedSeat(seat)}
+          selectedSeatIds={selectedSeatIds}
+          onSelect={handleSeatSelect}
         />
       </section>
     </div>

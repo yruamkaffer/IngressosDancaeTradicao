@@ -1,4 +1,4 @@
-﻿import { createHash } from "crypto";
+import { createHash } from "crypto";
 import { AdminReservationsClient, type AdminReservationRow } from "@/components/AdminReservationsClient";
 import { eventConfig } from "@/config/event";
 import { formatPhone, maskCpf } from "@/lib/format";
@@ -7,9 +7,20 @@ import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type { AdminOrder } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function hashCpf(cpf: string) {
   return createHash("sha256").update(cpf.replace(/\D/g, "")).digest("hex");
+}
+
+function groupedStatus(statuses: string[]) {
+  if (statuses.every((status) => status === "paid")) {
+    return "paid";
+  }
+  if (statuses.every((status) => status === "cancelled")) {
+    return "cancelled";
+  }
+  return "pending_payment";
 }
 
 async function getOrders() {
@@ -24,18 +35,31 @@ async function getOrders() {
     throw new Error(error.message);
   }
 
-  return ((data ?? []) as AdminOrder[]).map<AdminReservationRow>((order) => {
+  const groups = new Map<string, AdminOrder[]>();
+  for (const order of (data ?? []) as AdminOrder[]) {
+    const list = groups.get(order.reservation_code) ?? [];
+    list.push(order);
+    groups.set(order.reservation_code, list);
+  }
+
+  return Array.from(groups.values()).map<AdminReservationRow>((orders) => {
+    const first = orders[0];
+    const seatLabels = orders.map((order) => relationLabel(order.seats)).filter(Boolean);
+    const ticketCodes = orders.map((order) => relationTicketCode(order.tickets)).filter(Boolean) as string[];
+
     return {
-      id: order.id,
-      reservationCode: order.reservation_code,
-      buyerName: order.buyer_name,
-      buyerPhone: formatPhone(order.buyer_phone),
-      buyerCpfMasked: maskCpf(order.buyer_cpf),
-      buyerCpfHash: hashCpf(order.buyer_cpf),
-      seatLabel: relationLabel(order.seats),
-      status: order.status,
-      ticketCode: relationTicketCode(order.tickets),
-      createdAt: order.created_at
+      id: first.id,
+      reservationCode: first.reservation_code,
+      buyerName: first.buyer_name,
+      buyerPhone: formatPhone(first.buyer_phone),
+      buyerEmail: first.buyer_email ?? "",
+      buyerCpfMasked: maskCpf(first.buyer_cpf),
+      buyerCpfHash: hashCpf(first.buyer_cpf),
+      seatLabel: seatLabels.join(", "),
+      seatCount: orders.length,
+      status: groupedStatus(orders.map((order) => order.status)),
+      ticketCode: ticketCodes.join(", ") || null,
+      createdAt: first.created_at
     };
   });
 }
@@ -44,5 +68,3 @@ export default async function AdminReservasPage() {
   const orders = await getOrders();
   return <AdminReservationsClient orders={orders} ticketPrice={eventConfig.ticketPrice} />;
 }
-
-

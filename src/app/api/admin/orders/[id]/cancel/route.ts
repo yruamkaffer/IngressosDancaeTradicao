@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(
   request: NextRequest,
@@ -14,7 +15,7 @@ export async function POST(
   }
 
   const supabase = getSupabaseAdmin();
-  const { error } = await supabase.rpc("cancel_order", {
+  const { error } = await supabase.rpc("cancel_reservation", {
     p_order_id: params.id
   });
 

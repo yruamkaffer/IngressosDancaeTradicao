@@ -11,9 +11,11 @@ export type AdminReservationRow = {
   reservationCode: string;
   buyerName: string;
   buyerPhone: string;
+  buyerEmail: string;
   buyerCpfMasked: string;
   buyerCpfHash: string;
   seatLabel: string;
+  seatCount: number;
   status: string;
   ticketCode: string | null;
   createdAt: string;
@@ -68,6 +70,7 @@ export function AdminReservationsClient({
       const fields = [
         order.buyerName,
         order.buyerPhone,
+        order.buyerEmail,
         order.reservationCode,
         order.seatLabel,
         order.ticketCode ?? ""
@@ -93,7 +96,7 @@ export function AdminReservationsClient({
           <div>
             <h1 className="text-2xl font-black text-ink">Reservas e pedidos</h1>
             <p className="mt-1 text-sm text-ink/65">
-              Busque por nome, CPF completo, telefone, código da reserva, ticket ou assento.
+              Busque por nome, CPF completo, telefone, email, codigo da reserva, ticket ou assento.
             </p>
           </div>
           <a href="/api/admin/export-csv" className="btn btn-secondary">
@@ -110,7 +113,7 @@ export function AdminReservationsClient({
               className="input pl-10"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Nome, CPF, telefone, reserva ou assento"
+              placeholder="Nome, CPF, telefone, email, reserva ou assento"
             />
           </div>
         </label>
@@ -133,39 +136,46 @@ export function AdminReservationsClient({
 
       <section className="card overflow-hidden p-0">
         <div className="overflow-x-auto">
-          <table className="admin-table min-w-[980px] border-0">
+          <table className="admin-table min-w-[1120px] border-0">
             <thead>
               <tr>
                 <th>Reserva</th>
                 <th>Comprador</th>
-                <th>Assento</th>
+                <th>Assentos</th>
                 <th>Status</th>
-                <th>Ticket</th>
+                <th>Tickets</th>
                 <th>Valor</th>
                 <th>Acoes</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((order) => (
-                <tr key={order.id}>
+                <tr key={order.reservationCode}>
                   <td>
                     <div className="font-bold text-ink">{order.reservationCode}</div>
                     <div className="text-xs text-ink/55">{new Date(order.createdAt).toLocaleString("pt-BR")}</div>
+                    <div className="text-xs text-ink/55">{order.seatCount} ingresso(s)</div>
                   </td>
                   <td>
                     <div className="font-bold text-ink">{order.buyerName}</div>
                     <div className="text-sm text-ink/65">{order.buyerPhone}</div>
+                    <div className="text-sm text-ink/65">{order.buyerEmail || "Sem email"}</div>
                     <div className="text-sm text-ink/65">{order.buyerCpfMasked}</div>
                   </td>
-                  <td className="font-bold text-ink">{order.seatLabel}</td>
+                  <td className="max-w-[260px] font-bold text-ink">{order.seatLabel}</td>
                   <td>
                     <StatusBadge status={order.status} />
                   </td>
-                  <td>{order.ticketCode ?? "-"}</td>
-                  <td>{order.status === "paid" ? formatCurrency(ticketPrice) : "-"}</td>
+                  <td className="max-w-[220px] text-sm">{order.ticketCode ?? "-"}</td>
+                  <td>{order.status === "paid" ? formatCurrency(ticketPrice * order.seatCount) : "-"}</td>
                   <td>
                     {order.status === "pending_payment" ? (
                       <ReservationActions orderId={order.id} />
+                    ) : order.status === "paid" ? (
+                      <a href={`/api/tickets/${order.reservationCode}/pdf`} className="btn btn-secondary min-h-10 px-3 py-2 text-sm">
+                        <Download className="h-4 w-4" />
+                        PDF
+                      </a>
                     ) : (
                       <span className="text-sm text-ink/50">Sem acao</span>
                     )}
@@ -186,4 +196,3 @@ export function AdminReservationsClient({
     </div>
   );
 }
-

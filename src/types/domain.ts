@@ -20,11 +20,12 @@ export type Order = {
   buyer_name: string;
   buyer_phone: string;
   buyer_cpf: string;
+  buyer_email?: string | null;
   reservation_code: string;
   status: OrderStatus;
   created_at: string;
   updated_at: string;
-  seats?: Seat | null;
+  seats?: Seat | Seat[] | null;
   tickets?: Ticket[] | null;
 };
 
@@ -37,6 +38,6 @@ export type Ticket = {
 };
 
 export type AdminOrder = Order & {
-  seats: Seat | null;
+  seats: Seat | Seat[] | null;
   tickets: Ticket[] | null;
 };

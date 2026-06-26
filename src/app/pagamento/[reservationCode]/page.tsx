@@ -1,4 +1,4 @@
-import { ArrowLeft, MessageCircle, TicketCheck } from "lucide-react";
+import { ArrowLeft, Download, MessageCircle, TicketCheck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/CopyButton";
@@ -9,23 +9,24 @@ import { firstRelation, relationTicketCode } from "@/lib/supabase/relations";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
-async function getOrder(reservationCode: string) {
+async function getReservation(reservationCode: string) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id,buyer_name,buyer_phone,buyer_cpf,reservation_code,status,created_at,seats(label,status),tickets(ticket_code)"
+      "id,buyer_name,buyer_phone,buyer_cpf,buyer_email,reservation_code,status,created_at,seats(label,status),tickets(ticket_code)"
     )
     .eq("event_id", eventConfig.id)
     .eq("reservation_code", reservationCode.toUpperCase())
-    .maybeSingle();
+    .order("created_at", { ascending: true });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data;
+  return data ?? [];
 }
 
 export default async function PagamentoPage({
@@ -33,21 +34,28 @@ export default async function PagamentoPage({
 }: {
   params: { reservationCode: string };
 }) {
-  const order = await getOrder(params.reservationCode);
-  const seat = firstRelation(order?.seats);
+  const orders = await getReservation(params.reservationCode);
+  const firstOrder = orders[0];
 
-  if (!order || !seat) {
+  if (!firstOrder) {
     notFound();
   }
 
-  const ticketCode = relationTicketCode(order.tickets);
-  const seatLabel = seat.label;
+  const seats = orders.map((order) => firstRelation(order.seats)).filter(Boolean);
+  const seatLabels = seats.map((seat) => seat?.label ?? "").filter(Boolean);
+  const ticketCodes = orders.map((order) => relationTicketCode(order.tickets)).filter(Boolean) as string[];
+  const allPaid = orders.every((order) => order.status === "paid");
+  const allCancelled = orders.every((order) => order.status === "cancelled");
+  const status = allPaid ? "paid" : allCancelled ? "cancelled" : "pending_payment";
+  const total = orders.length * eventConfig.ticketPrice;
+
   const whatsappUrl = buildWhatsAppUrl({
-    buyerName: order.buyer_name,
-    buyerCpf: order.buyer_cpf,
-    buyerPhone: order.buyer_phone,
-    seatLabel,
-    reservationCode: order.reservation_code
+    buyerName: firstOrder.buyer_name,
+    buyerCpf: firstOrder.buyer_cpf,
+    buyerPhone: firstOrder.buyer_phone,
+    buyerEmail: firstOrder.buyer_email,
+    seatLabels,
+    reservationCode: firstOrder.reservation_code
   });
 
   return (
@@ -62,38 +70,47 @@ export default async function PagamentoPage({
           <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
               <p className="text-sm font-bold uppercase text-curtain">Reserva criada</p>
-              <h1 className="mt-1 text-3xl font-black text-ink">Pagamento via Pix Nubank</h1>
+              <h1 className="mt-1 text-3xl font-black text-ink">Pagamento via Pix</h1>
             </div>
-            <StatusBadge status={order.status} />
+            <StatusBadge status={status} />
           </div>
 
-          {ticketCode && (
+          {allPaid && ticketCodes.length > 0 && (
             <div className="mb-5 rounded-lg border border-teal/25 bg-teal/10 p-4 text-teal">
               <div className="font-black">Pagamento confirmado.</div>
-              <p className="mt-1 text-sm text-ink/75">Seu ticket já está liberado.</p>
-              <Link href={`/ticket/${ticketCode}`} className="btn btn-primary mt-3">
-                <TicketCheck className="h-4 w-4" />
-                Abrir ticket
-              </Link>
+              <p className="mt-1 text-sm text-ink/75">
+                O PDF do ticket fica disponivel para download e tambem pode ser enviado ao email informado.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <a href={`/api/tickets/${firstOrder.reservation_code}/pdf`} className="btn btn-primary">
+                  <Download className="h-4 w-4" />
+                  Baixar PDF
+                </a>
+                <Link href={`/ticket/${ticketCodes[0]}`} className="btn btn-secondary">
+                  <TicketCheck className="h-4 w-4" />
+                  Abrir ticket
+                </Link>
+              </div>
             </div>
           )}
 
           <dl className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-lg border border-line bg-mist p-4">
               <dt className="text-sm font-bold uppercase text-ink/55">Comprador</dt>
-              <dd className="mt-1 font-bold text-ink">{order.buyer_name}</dd>
+              <dd className="mt-1 font-bold text-ink">{firstOrder.buyer_name}</dd>
               <dd className="text-sm text-ink/65">
-                {maskCpf(order.buyer_cpf)} | {formatPhone(order.buyer_phone)}
+                {maskCpf(firstOrder.buyer_cpf)} | {formatPhone(firstOrder.buyer_phone)}
               </dd>
+              <dd className="text-sm text-ink/65">{firstOrder.buyer_email}</dd>
             </div>
             <div className="rounded-lg border border-line bg-mist p-4">
               <dt className="text-sm font-bold uppercase text-ink/55">Reserva</dt>
-              <dd className="mt-1 font-bold text-ink">{order.reservation_code}</dd>
-              <dd className="text-sm text-ink/65">Assento {seatLabel}</dd>
+              <dd className="mt-1 font-bold text-ink">{firstOrder.reservation_code}</dd>
+              <dd className="text-sm text-ink/65">{orders.length} assento(s): {seatLabels.join(", ")}</dd>
             </div>
             <div className="rounded-lg border border-line bg-mist p-4">
-              <dt className="text-sm font-bold uppercase text-ink/55">Valor</dt>
-              <dd className="mt-1 font-bold text-ink">{formatCurrency(eventConfig.ticketPrice)}</dd>
+              <dt className="text-sm font-bold uppercase text-ink/55">Valor total</dt>
+              <dd className="mt-1 font-bold text-ink">{formatCurrency(total)}</dd>
             </div>
             <div className="rounded-lg border border-line bg-mist p-4">
               <dt className="text-sm font-bold uppercase text-ink/55">Recebedor Pix</dt>
@@ -102,7 +119,7 @@ export default async function PagamentoPage({
           </dl>
 
           <div className="mt-6 rounded-lg border border-brass/35 bg-brass/15 p-4 text-sm leading-6 text-ink">
-            Seu ingresso só será confirmado após envio do comprovante e validação manual da organização.
+            {eventConfig.pixInstructions} Seu ingresso so sera confirmado apos envio do comprovante e validacao manual.
           </div>
         </section>
 
@@ -110,12 +127,15 @@ export default async function PagamentoPage({
           <h2 className="text-xl font-bold text-ink">Dados do Pix</h2>
           <img
             src={eventConfig.pixQrCodeImage}
-            alt="QR Code Pix Nubank"
+            alt="QR Code Pix"
             className="mt-4 aspect-square w-full rounded-lg border border-line bg-white object-contain p-3"
           />
           <div className="mt-4 rounded-lg border border-line bg-mist p-3">
-            <div className="text-xs font-bold uppercase text-ink/55">Chave Pix Nubank</div>
+            <div className="text-xs font-bold uppercase text-ink/55">Chave Pix</div>
             <div className="break-all font-bold text-ink">{eventConfig.pixKey}</div>
+          </div>
+          <div className="mt-4 rounded-lg border border-line bg-white p-3 text-sm leading-6 text-ink/70">
+            {eventConfig.cashSalesNote}
           </div>
           <div className="mt-4 grid gap-3">
             <CopyButton value={eventConfig.pixKey} label="Copiar chave Pix" />
@@ -129,5 +149,3 @@ export default async function PagamentoPage({
     </main>
   );
 }
-
-

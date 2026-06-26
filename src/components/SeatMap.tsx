@@ -7,6 +7,7 @@ import type { Seat, SeatStatus } from "@/types/domain";
 type SeatMapProps = {
   seats: Seat[];
   selectedSeatId?: string;
+  selectedSeatIds?: string[];
   onSelect?: (seat: Seat) => void;
   adminMode?: boolean;
   busySeatId?: string | null;
@@ -67,7 +68,7 @@ function formatSeatNumber(number: number) {
 }
 
 function sectionWidth(columns: number) {
-  return `${columns * 1.7 + Math.max(columns - 1, 0) * 0.25 + 2.4}rem`;
+  return `${columns * 1.5 + Math.max(columns - 1, 0) * 0.2 + 3.8}rem`;
 }
 
 function rowSort(left: string, right: string) {
@@ -77,12 +78,18 @@ function rowSort(left: string, right: string) {
 export function SeatMap({
   seats,
   selectedSeatId,
+  selectedSeatIds,
   onSelect,
   adminMode = false,
   busySeatId,
   onBlock,
   onUnblock
 }: SeatMapProps) {
+  const selectedIds = useMemo(
+    () => new Set(selectedSeatIds ?? (selectedSeatId ? [selectedSeatId] : [])),
+    [selectedSeatId, selectedSeatIds]
+  );
+
   const seatsBySectorRow = useMemo(() => {
     const grouped = new Map<string, Seat[]>();
 
@@ -138,14 +145,14 @@ export function SeatMap({
 
   function renderSeatButton(seat: Seat | undefined, fallbackNumber: number, emptyKey: string) {
     if (!seat) {
-      return <div key={emptyKey} className="h-7 w-7" aria-hidden />;
+      return <div key={emptyKey} className="h-6 w-6" aria-hidden />;
     }
 
-    const selected = seat.id === selectedSeatId;
+    const selected = selectedIds.has(seat.id);
     const disabled = seat.status !== "available";
     const isBusy = busySeatId === seat.id;
     const className = selected
-      ? "border-stage bg-stage text-white shadow-md"
+      ? "border-stage bg-stage text-white shadow-md ring-2 ring-stage/25"
       : statusClasses[seat.status];
 
     return (
@@ -163,7 +170,7 @@ export function SeatMap({
               onSelect?.(seat);
             }
           }}
-          className={`flex h-7 w-7 items-center justify-center rounded-md border text-[10px] font-black leading-none transition ${className} ${
+          className={`flex h-6 w-6 items-center justify-center rounded-md border text-[9px] font-black leading-none transition ${className} ${
             !adminMode && disabled ? "opacity-75" : ""
           }`}
         >
@@ -210,7 +217,7 @@ export function SeatMap({
     return (
       <div
         key={section.sector}
-        className="rounded-lg border border-line bg-white/90 p-3 shadow-sm"
+        className="shrink-0 rounded-lg border border-line bg-white/90 p-3 shadow-sm"
         style={{ width: sectionWidth(section.columns) }}
       >
         <div className="mb-3 text-center text-xs font-black uppercase tracking-[0.14em] text-curtain">
@@ -220,11 +227,11 @@ export function SeatMap({
           {section.rows.map((row) => {
             const rowSeats = seatsBySectorRow.get(sectorRowKey(section.sector, row)) ?? [];
             return (
-              <div key={`${section.sector}-${row}`} className="grid grid-cols-[1.6rem_1fr] items-center gap-2">
+              <div key={`${section.sector}-${row}`} className="grid grid-cols-[1.35rem_1fr] items-center gap-2">
                 <div className="text-center text-[11px] font-black text-curtain">{row}</div>
                 <div
                   className="grid gap-1"
-                  style={{ gridTemplateColumns: `repeat(${section.columns}, minmax(1.7rem, 1.7rem))` }}
+                  style={{ gridTemplateColumns: `repeat(${section.columns}, minmax(1.5rem, 1.5rem))` }}
                 >
                   {Array.from({ length: section.columns }, (_, index) =>
                     renderSeatButton(rowSeats[index], index + 1, `${section.sector}-${row}-${index}`)
@@ -258,7 +265,7 @@ export function SeatMap({
 
   return (
     <div className="w-full max-w-full overflow-x-auto rounded-lg border border-line bg-white/70 p-3 sm:p-4 lg:p-5">
-      <div className="mx-auto min-w-[1180px] max-w-[1320px] align-top">
+      <div className="mx-auto w-max min-w-[1080px] max-w-none align-top">
         <div className="mx-auto mb-5 max-w-5xl rounded-md border border-curtain/20 bg-gradient-to-r from-curtain via-rose to-stage px-4 py-3 text-center text-sm font-bold uppercase tracking-[0.18em] text-white">
           PALCO
         </div>
@@ -268,7 +275,7 @@ export function SeatMap({
             section.type === "aisle" ? (
               <div
                 key={`${section.title}-${index}`}
-                className="flex w-12 shrink-0 items-center justify-center rounded-lg border border-dashed border-line bg-mist/70 text-[10px] font-black uppercase tracking-[0.16em] text-ink/50 [writing-mode:vertical-rl]"
+                className="flex w-10 shrink-0 items-center justify-center rounded-lg border border-dashed border-line bg-mist/70 text-[9px] font-black uppercase tracking-[0.16em] text-ink/50 [writing-mode:vertical-rl]"
               >
                 {section.title}
               </div>

@@ -20,7 +20,7 @@ set
   date = '2026-11-15',
   time = '20:00',
   location = 'Teatro CENSUPEG (antigo Teatro da CNEC)',
-  ticket_price = 80.00
+  ticket_price = 30.00
 where id = '9a5773b8-2367-4ced-a455-03263f191f89';
 
 delete from seats

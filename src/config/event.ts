@@ -32,9 +32,13 @@ export const eventConfig = {
     rightsOwner: "Dança & Tradição Studio de Danças",
     developer: "Yruam Käffer de Faria"
   },
-  ticketPrice: 80,
-  pixKey: "pix.nubank@exemplo.com",
+  ticketPrice: 30,
+  maxSeatsPerOrder: 5,
+  pixKey: "chave-pix-da-organizacao",
   pixReceiverName: "Dança & Tradição Studio de Danças",
+  pixInstructions:
+    "Compras pelo app aceitam somente Pix. Para pagamento em dinheiro, compre diretamente na escola.",
+  cashSalesNote: "Pagamento em dinheiro somente diretamente na escola.",
   whatsappPhone: "5511999999999",
   pixQrCodeImage: "/pix-qrcode-placeholder.svg",
   heroImage: "/palco-danca-composicao-20260626.png",
