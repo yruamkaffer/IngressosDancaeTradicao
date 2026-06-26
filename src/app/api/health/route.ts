@@ -3,6 +3,9 @@ import { eventConfig } from "@/config/event";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+const diagnosticVersion = "health-2026-06-26-1345";
 
 const requiredEnvNames = [
   "NEXT_PUBLIC_SUPABASE_URL",
@@ -12,15 +15,25 @@ const requiredEnvNames = [
   "NEXT_PUBLIC_SITE_URL"
 ];
 
+function envValue(name: string) {
+  return process.env[name]?.trim() ?? "";
+}
+
 function envStatus() {
-  return requiredEnvNames.map((name) => ({
-    name,
-    configured: Boolean(process.env[name]?.trim())
-  }));
+  return requiredEnvNames.map((name) => {
+    const raw = process.env[name];
+    const trimmed = raw?.trim() ?? "";
+
+    return {
+      name,
+      configured: Boolean(trimmed),
+      hasPadding: Boolean(raw && raw !== trimmed)
+    };
+  });
 }
 
 function supabaseHost() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const url = envValue("NEXT_PUBLIC_SUPABASE_URL");
   if (!url) {
     return null;
   }
@@ -28,8 +41,36 @@ function supabaseHost() {
   try {
     return new URL(url).host;
   } catch {
-    return "URL inválida";
+    return "URL invalida";
   }
+}
+
+function describeCause(cause: unknown): unknown {
+  if (!cause) {
+    return undefined;
+  }
+
+  if (cause instanceof Error) {
+    return {
+      name: cause.name,
+      message: cause.message,
+      cause: describeCause(cause.cause)
+    };
+  }
+
+  if (typeof cause === "object") {
+    const record = cause as Record<string, unknown>;
+    return {
+      code: record.code,
+      errno: record.errno,
+      syscall: record.syscall,
+      address: record.address,
+      port: record.port,
+      message: record.message
+    };
+  }
+
+  return String(cause);
 }
 
 function describeError(error: unknown) {
@@ -37,7 +78,7 @@ function describeError(error: unknown) {
     return {
       name: error.name,
       message: error.message,
-      cause: String(error.cause ?? "") || undefined
+      cause: describeCause(error.cause)
     };
   }
 
@@ -47,20 +88,52 @@ function describeError(error: unknown) {
   };
 }
 
+async function probeSupabaseRest() {
+  const url = new URL("/rest/v1/seats", envValue("NEXT_PUBLIC_SUPABASE_URL"));
+  url.searchParams.set("select", "id,sector");
+  url.searchParams.set("event_id", `eq.${eventConfig.id}`);
+  url.searchParams.set("limit", "1");
+
+  const startedAt = Date.now();
+  const response = await fetch(url.toString(), {
+    cache: "no-store",
+    headers: {
+      apikey: envValue("SUPABASE_SERVICE_ROLE_KEY"),
+      Authorization: `Bearer ${envValue("SUPABASE_SERVICE_ROLE_KEY")}`
+    }
+  });
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    statusText: response.statusText,
+    durationMs: Date.now() - startedAt
+  };
+}
+
 export async function GET() {
   const env = envStatus();
   const missingEnv = env.filter((item) => !item.configured).map((item) => item.name);
+
+  const basePayload = {
+    diagnosticVersion,
+    env,
+    missingEnv,
+    supabase: {
+      host: supabaseHost(),
+      eventId: eventConfig.id
+    }
+  };
 
   if (missingEnv.length > 0) {
     return NextResponse.json(
       {
         ok: false,
-        env,
-        missingEnv,
+        ...basePayload,
         supabase: {
+          ...basePayload.supabase,
           ok: false,
-          host: supabaseHost(),
-          error: "Configure as variáveis de ambiente faltantes na Vercel e faça redeploy."
+          error: "Configure as variaveis de ambiente faltantes na Vercel e faca redeploy."
         }
       },
       { status: 500 }
@@ -68,6 +141,7 @@ export async function GET() {
   }
 
   try {
+    const restProbe = await probeSupabaseRest();
     const supabase = getSupabaseAdmin();
     const { data, count, error } = await supabase
       .from("seats")
@@ -79,12 +153,11 @@ export async function GET() {
       return NextResponse.json(
         {
           ok: false,
-          env,
-          missingEnv: [],
+          ...basePayload,
           supabase: {
+            ...basePayload.supabase,
             ok: false,
-            host: supabaseHost(),
-            eventId: eventConfig.id,
+            restProbe,
             error: error.message
           }
         },
@@ -99,12 +172,11 @@ export async function GET() {
 
     return NextResponse.json({
       ok: true,
-      env,
-      missingEnv: [],
+      ...basePayload,
       supabase: {
+        ...basePayload.supabase,
         ok: true,
-        host: supabaseHost(),
-        eventId: eventConfig.id,
+        restProbe,
         seatsExactCount: count ?? data?.length ?? 0,
         expectedSeats: 640,
         sectorCounts
@@ -114,12 +186,10 @@ export async function GET() {
     return NextResponse.json(
       {
         ok: false,
-        env,
-        missingEnv: [],
+        ...basePayload,
         supabase: {
+          ...basePayload.supabase,
           ok: false,
-          host: supabaseHost(),
-          eventId: eventConfig.id,
           error: describeError(error)
         }
       },

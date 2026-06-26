@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type { Seat } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 async function getSeats() {
   const supabase = getSupabaseAdmin();
