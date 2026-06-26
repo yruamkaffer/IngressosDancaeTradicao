@@ -19,6 +19,19 @@ function envStatus() {
   }));
 }
 
+function supabaseHost() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) {
+    return null;
+  }
+
+  try {
+    return new URL(url).host;
+  } catch {
+    return "URL invalida";
+  }
+}
+
 export async function GET() {
   const env = envStatus();
   const missingEnv = env.filter((item) => !item.configured).map((item) => item.name);
@@ -31,7 +44,8 @@ export async function GET() {
         missingEnv,
         supabase: {
           ok: false,
-          error: "Configure as variaveis de ambiente faltantes na Vercel e faca redeploy."
+          host: supabaseHost(),
+          error: "Configure as variáveis de ambiente faltantes na Vercel e faça redeploy."
         }
       },
       { status: 500 }
@@ -40,11 +54,10 @@ export async function GET() {
 
   try {
     const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase
+    const { count, error } = await supabase
       .from("seats")
-      .select("id", { count: "exact" })
-      .eq("event_id", eventConfig.id)
-      .limit(1);
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", eventConfig.id);
 
     if (error) {
       return NextResponse.json(
@@ -54,6 +67,8 @@ export async function GET() {
           missingEnv: [],
           supabase: {
             ok: false,
+            host: supabaseHost(),
+            eventId: eventConfig.id,
             error: error.message
           }
         },
@@ -67,8 +82,10 @@ export async function GET() {
       missingEnv: [],
       supabase: {
         ok: true,
+        host: supabaseHost(),
         eventId: eventConfig.id,
-        seatsQueryReturned: data?.length ?? 0
+        seatsExactCount: count ?? 0,
+        expectedSeats: 640
       }
     });
   } catch (error) {
@@ -79,6 +96,8 @@ export async function GET() {
         missingEnv: [],
         supabase: {
           ok: false,
+          host: supabaseHost(),
+          eventId: eventConfig.id,
           error: error instanceof Error ? error.message : "Erro desconhecido."
         }
       },
