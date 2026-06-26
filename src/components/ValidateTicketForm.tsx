@@ -34,7 +34,7 @@ export function ValidateTicketForm() {
     setLoading(false);
 
     if (!payload.ok) {
-      setError(payload.error ?? "Ticket nao encontrado.");
+      setError(payload.error ?? "Ticket não encontrado.");
       return;
     }
 
@@ -45,10 +45,10 @@ export function ValidateTicketForm() {
     <div className="grid gap-5 lg:grid-cols-[420px_1fr]">
       <form onSubmit={submit} className="card h-fit p-5">
         <h1 className="text-2xl font-bold text-ink">Validar ingresso</h1>
-        <p className="mt-1 text-sm text-ink/65">Informe o codigo impresso no ticket.</p>
+        <p className="mt-1 text-sm text-ink/65">Informe o código impresso no ticket.</p>
 
         <label className="mt-5 block">
-          <span className="mb-1 block text-sm font-bold text-ink">Codigo do ticket</span>
+          <span className="mb-1 block text-sm font-bold text-ink">Código do ticket</span>
           <input
             className="input uppercase"
             value={ticketCode}
@@ -68,7 +68,7 @@ export function ValidateTicketForm() {
 
       <section className="card p-5">
         <h2 className="text-xl font-bold text-ink">Resultado</h2>
-        {!result && <p className="mt-3 text-ink/65">A validacao aparecera aqui.</p>}
+        {!result && <p className="mt-3 text-ink/65">A validação aparecerá aqui.</p>}
         {result && (
           <div
             className={`mt-4 rounded-lg border p-4 ${
@@ -78,7 +78,7 @@ export function ValidateTicketForm() {
             }`}
           >
             <div className="text-lg font-black">
-              {result.alreadyUsed ? "Ingresso ja utilizado" : "Ingresso validado"}
+              {result.alreadyUsed ? "Ingresso já utilizado" : "Ingresso validado"}
             </div>
             <dl className="mt-4 grid gap-3 text-sm text-ink sm:grid-cols-2">
               <div>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Download, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -93,7 +93,7 @@ export function AdminReservationsClient({
           <div>
             <h1 className="text-2xl font-black text-ink">Reservas e pedidos</h1>
             <p className="mt-1 text-sm text-ink/65">
-              Busque por nome, CPF completo, telefone, codigo da reserva, ticket ou assento.
+              Busque por nome, CPF completo, telefone, código da reserva, ticket ou assento.
             </p>
           </div>
           <a href="/api/admin/export-csv" className="btn btn-secondary">

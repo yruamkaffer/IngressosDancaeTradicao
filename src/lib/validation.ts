@@ -22,7 +22,7 @@ export function validateBuyer(input: {
     errors.buyerCpf = "Informe um CPF com 11 digitos.";
   }
   if (!seatId) {
-    errors.seatId = "Escolha um assento disponivel.";
+    errors.seatId = "Escolha um assento disponível.";
   }
 
   return {

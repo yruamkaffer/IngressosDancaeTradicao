@@ -56,7 +56,7 @@ export function buildWhatsAppUrl(input: {
   reservationCode: string;
 }) {
   const message = [
-    "Ola! Fiz a reserva do ingresso para o espetaculo.",
+    `Olá! Fiz a reserva do ingresso para ${eventConfig.name}.`,
     `Nome: ${input.buyerName}`,
     `CPF: ${maskCpf(input.buyerCpf)}`,
     `Telefone: ${formatPhone(input.buyerPhone)}`,
@@ -79,7 +79,7 @@ export function orderStatusLabel(status: string) {
 
 export function seatStatusLabel(status: string) {
   const labels: Record<string, string> = {
-    available: "Disponivel",
+    available: "Disponível",
     reserved: "Reservado",
     sold: "Vendido",
     blocked: "Bloqueado"

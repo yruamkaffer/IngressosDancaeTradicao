@@ -1,4 +1,4 @@
-﻿import { ArrowLeft, MessageCircle, TicketCheck } from "lucide-react";
+import { ArrowLeft, MessageCircle, TicketCheck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/CopyButton";
@@ -70,7 +70,7 @@ export default async function PagamentoPage({
           {ticketCode && (
             <div className="mb-5 rounded-lg border border-teal/25 bg-teal/10 p-4 text-teal">
               <div className="font-black">Pagamento confirmado.</div>
-              <p className="mt-1 text-sm text-ink/75">Seu ticket ja esta liberado.</p>
+              <p className="mt-1 text-sm text-ink/75">Seu ticket já está liberado.</p>
               <Link href={`/ticket/${ticketCode}`} className="btn btn-primary mt-3">
                 <TicketCheck className="h-4 w-4" />
                 Abrir ticket
@@ -102,7 +102,7 @@ export default async function PagamentoPage({
           </dl>
 
           <div className="mt-6 rounded-lg border border-brass/35 bg-brass/15 p-4 text-sm leading-6 text-ink">
-            Seu ingresso so sera confirmado apos envio do comprovante e validacao manual da organizacao.
+            Seu ingresso só será confirmado após envio do comprovante e validação manual da organização.
           </div>
         </section>
 

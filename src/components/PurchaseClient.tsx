@@ -118,7 +118,7 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
               onChange={(event) => setBuyerPhone(event.target.value)}
               inputMode="tel"
               autoComplete="tel"
-              placeholder="DDD + numero"
+              placeholder="DDD + número"
             />
             {errors.buyerPhone && (
               <span className="mt-1 block text-sm text-rose">{errors.buyerPhone}</span>
@@ -133,7 +133,7 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
               onChange={(event) => setBuyerCpf(event.target.value)}
               inputMode="numeric"
               autoComplete="off"
-              placeholder="Somente numeros"
+              placeholder="Somente números"
             />
             {errors.buyerCpf && <span className="mt-1 block text-sm text-rose">{errors.buyerCpf}</span>}
           </label>
@@ -143,7 +143,7 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
             {selectedSeat ? (
               <div>{selectedSeat.label}</div>
             ) : (
-              <div>Selecione um assento disponivel no mapa.</div>
+              <div>Selecione um assento disponível no mapa.</div>
             )}
             {errors.seatId && <span className="mt-1 block text-sm text-rose">{errors.seatId}</span>}
           </div>
@@ -166,7 +166,7 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
           <div>
             <h2 className="text-xl font-bold text-ink">Mapa do teatro</h2>
             <p className="text-sm text-ink/65">
-              {availableCount} assentos disponiveis. Reservas ficam pendentes ate validacao manual.
+              {availableCount} assentos disponíveis. Reservas ficam pendentes até validação manual.
             </p>
           </div>
           <SeatLegend />

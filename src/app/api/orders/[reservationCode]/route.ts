@@ -1,4 +1,4 @@
-﻿import { eventConfig } from "@/config/event";
+import { eventConfig } from "@/config/event";
 import { fail, ok } from "@/lib/api";
 import { formatPhone, maskCpf } from "@/lib/format";
 import { firstRelation, relationTicketCode } from "@/lib/supabase/relations";
@@ -28,7 +28,7 @@ export async function GET(
   }
 
   if (!data) {
-    return fail("Reserva nao encontrada.", 404);
+    return fail("Reserva não encontrada.", 404);
   }
 
   return ok({

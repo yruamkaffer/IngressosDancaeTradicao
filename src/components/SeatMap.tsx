@@ -14,6 +14,40 @@ type SeatMapProps = {
   onUnblock?: (seat: Seat) => void;
 };
 
+type SeatSection = {
+  type: "seats";
+  sector: string;
+  title: string;
+  columns: number;
+  rows: string[];
+};
+
+type AisleSection = {
+  type: "aisle";
+  title: string;
+};
+
+type TheaterSection = SeatSection | AisleSection;
+
+const mainRows = Array.from("ABCDEFGHIJKLMNOP");
+const balconyRows = Array.from("ABCDEFGH");
+
+const mainFloor: TheaterSection[] = [
+  { type: "seats", sector: "Plateia esquerda", title: "Esquerda", columns: 6, rows: mainRows },
+  { type: "aisle", title: "Corredor" },
+  { type: "seats", sector: "Plateia central", title: "Centro", columns: 20, rows: mainRows },
+  { type: "aisle", title: "Corredor" },
+  { type: "seats", sector: "Plateia direita", title: "Direita", columns: 6, rows: mainRows }
+];
+
+const balcony: SeatSection = {
+  type: "seats",
+  sector: "2º piso",
+  title: "2º piso",
+  columns: 16,
+  rows: balconyRows
+};
+
 const statusClasses: Record<SeatStatus, string> = {
   available:
     "border-teal bg-teal/10 text-teal hover:bg-teal hover:text-white hover:shadow-md",
@@ -21,6 +55,18 @@ const statusClasses: Record<SeatStatus, string> = {
   sold: "cursor-not-allowed border-curtain bg-curtain text-white",
   blocked: "cursor-not-allowed border-ink bg-ink/15 text-ink/45"
 };
+
+function sectorRowKey(sector: string, row: string) {
+  return `${sector}::${row}`;
+}
+
+function formatSeatNumber(number: number) {
+  return number.toString().padStart(2, "0");
+}
+
+function sectionWidth(columns: number) {
+  return `${columns * 1.8 + Math.max(columns - 1, 0) * 0.25 + 2.4}rem`;
+}
 
 export function SeatMap({
   seats,
@@ -31,101 +77,156 @@ export function SeatMap({
   onBlock,
   onUnblock
 }: SeatMapProps) {
-  const rows = useMemo(() => {
+  const seatsBySectorRow = useMemo(() => {
     const grouped = new Map<string, Seat[]>();
+
     for (const seat of seats) {
-      const list = grouped.get(seat.row) ?? [];
+      const key = sectorRowKey(seat.sector, seat.row);
+      const list = grouped.get(key) ?? [];
       list.push(seat);
-      grouped.set(seat.row, list);
+      grouped.set(key, list);
     }
 
-    return Array.from(grouped.entries())
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([row, rowSeats]) => ({
-        row,
-        seats: rowSeats.sort((left, right) => left.number - right.number)
-      }));
+    for (const rowSeats of grouped.values()) {
+      rowSeats.sort((left, right) => left.number - right.number);
+    }
+
+    return grouped;
   }, [seats]);
+
+  function renderSeatButton(seat: Seat | undefined, fallbackNumber: number) {
+    if (!seat) {
+      return <div key={`empty-${fallbackNumber}`} className="h-7 w-7" aria-hidden />;
+    }
+
+    const selected = seat.id === selectedSeatId;
+    const disabled = seat.status !== "available";
+    const isBusy = busySeatId === seat.id;
+    const className = selected
+      ? "border-stage bg-stage text-white shadow-md"
+      : statusClasses[seat.status];
+
+    return (
+      <div key={seat.id} className="flex flex-col items-center gap-1">
+        <button
+          type="button"
+          aria-label={`Assento ${seat.label}, ${seat.status}`}
+          title={seat.label}
+          disabled={!adminMode && disabled}
+          onClick={() => {
+            if (adminMode) {
+              return;
+            }
+            if (!disabled) {
+              onSelect?.(seat);
+            }
+          }}
+          className={`flex h-7 w-7 items-center justify-center rounded-md border text-[10px] font-black leading-none transition ${className} ${
+            !adminMode && disabled ? "opacity-75" : ""
+          }`}
+        >
+          {isBusy ? "..." : formatSeatNumber(seat.number)}
+        </button>
+
+        {adminMode && (
+          <div className="h-6">
+            {seat.status === "available" && (
+              <button
+                type="button"
+                onClick={() => onBlock?.(seat)}
+                className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-line bg-white text-ink hover:border-curtain hover:text-curtain"
+                title={`Bloquear ${seat.label}`}
+                aria-label={`Bloquear assento ${seat.label}`}
+              >
+                <Lock className="h-3 w-3" />
+              </button>
+            )}
+            {seat.status === "blocked" && (
+              <button
+                type="button"
+                onClick={() => onUnblock?.(seat)}
+                className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-line bg-white text-teal hover:border-teal"
+                title={`Desbloquear ${seat.label}`}
+                aria-label={`Desbloquear assento ${seat.label}`}
+              >
+                <Unlock className="h-3 w-3" />
+              </button>
+            )}
+            {seat.status === "reserved" && (
+              <Armchair className="mx-auto h-4 w-4 text-brass" aria-hidden />
+            )}
+            {seat.status === "sold" && (
+              <Armchair className="mx-auto h-4 w-4 text-curtain" aria-hidden />
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function renderSeatSection(section: SeatSection) {
+    return (
+      <div key={section.sector} className="rounded-lg border border-line bg-white/85 p-3" style={{ width: sectionWidth(section.columns) }}>
+        <div className="mb-3 text-center text-xs font-black uppercase tracking-[0.14em] text-curtain">
+          {section.title}
+        </div>
+        <div className="space-y-1.5">
+          {section.rows.map((row) => {
+            const rowSeats = seatsBySectorRow.get(sectorRowKey(section.sector, row)) ?? [];
+            return (
+              <div key={`${section.sector}-${row}`} className="grid grid-cols-[1.65rem_1fr] items-center gap-2">
+                <div className="text-center text-[11px] font-black text-curtain">{row}</div>
+                <div
+                  className="grid gap-1"
+                  style={{ gridTemplateColumns: `repeat(${section.columns}, minmax(1.75rem, 1.75rem))` }}
+                >
+                  {Array.from({ length: section.columns }, (_, index) =>
+                    renderSeatButton(rowSeats[index], index + 1)
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full overflow-x-auto rounded-lg border border-line bg-white/70 p-4">
-      <div className="mx-auto min-w-[620px] max-w-3xl">
-        <div className="mb-6 rounded-md border border-curtain/20 bg-gradient-to-r from-curtain via-rose to-stage px-4 py-3 text-center text-sm font-bold uppercase tracking-[0.18em] text-white">
+      <div className="mx-auto min-w-[1130px] max-w-7xl">
+        <div className="mx-auto mb-5 max-w-4xl rounded-md border border-curtain/20 bg-gradient-to-r from-curtain via-rose to-stage px-4 py-3 text-center text-sm font-bold uppercase tracking-[0.18em] text-white">
           PALCO
         </div>
 
-        <div className="space-y-3">
-          {rows.map((row) => (
-            <div key={row.row} className="grid grid-cols-[42px_1fr] items-center gap-3">
-              <div className="text-center text-sm font-bold text-curtain">{row.row}</div>
-              <div className="grid grid-cols-10 gap-2">
-                {row.seats.map((seat) => {
-                  const selected = seat.id === selectedSeatId;
-                  const disabled = seat.status !== "available";
-                  const isBusy = busySeatId === seat.id;
-                  const className = selected
-                    ? "border-stage bg-stage text-white shadow-md"
-                    : statusClasses[seat.status];
-
-                  return (
-                    <div key={seat.id} className="flex flex-col items-center gap-1">
-                      <button
-                        type="button"
-                        aria-label={`Assento ${seat.label}, ${seat.status}`}
-                        disabled={!adminMode && disabled}
-                        onClick={() => {
-                          if (adminMode) {
-                            return;
-                          }
-                          if (!disabled) {
-                            onSelect?.(seat);
-                          }
-                        }}
-                        className={`flex h-11 w-12 items-center justify-center rounded-md border text-xs font-bold transition ${className} ${
-                          !adminMode && disabled ? "opacity-75" : ""
-                        }`}
-                      >
-                        {isBusy ? "..." : seat.label}
-                      </button>
-
-                      {adminMode && (
-                        <div className="h-7">
-                          {seat.status === "available" && (
-                            <button
-                              type="button"
-                              onClick={() => onBlock?.(seat)}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-line bg-white text-ink hover:border-curtain hover:text-curtain"
-                              title={`Bloquear ${seat.label}`}
-                              aria-label={`Bloquear assento ${seat.label}`}
-                            >
-                              <Lock className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                          {seat.status === "blocked" && (
-                            <button
-                              type="button"
-                              onClick={() => onUnblock?.(seat)}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-line bg-white text-teal hover:border-teal"
-                              title={`Desbloquear ${seat.label}`}
-                              aria-label={`Desbloquear assento ${seat.label}`}
-                            >
-                              <Unlock className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                          {seat.status === "reserved" && (
-                            <Armchair className="mx-auto h-5 w-5 text-brass" aria-hidden />
-                          )}
-                          {seat.status === "sold" && (
-                            <Armchair className="mx-auto h-5 w-5 text-curtain" aria-hidden />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+        <div className="flex items-stretch justify-center gap-4">
+          {mainFloor.map((section, index) =>
+            section.type === "aisle" ? (
+              <div
+                key={`${section.title}-${index}`}
+                className="flex w-16 items-center justify-center rounded-lg border border-dashed border-line bg-mist/70 text-[11px] font-black uppercase tracking-[0.16em] text-ink/50 [writing-mode:vertical-rl]"
+              >
+                {section.title}
               </div>
-            </div>
-          ))}
+            ) : (
+              renderSeatSection(section)
+            )
+          )}
+        </div>
+
+        <div className="mt-6 rounded-lg border-2 border-rose/55 bg-white/85 p-4">
+          <div className="mb-3 text-center text-sm font-black uppercase tracking-[0.16em] text-rose">
+            2º piso
+          </div>
+          <div className="flex justify-center">{renderSeatSection(balcony)}</div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap justify-center gap-3 text-xs font-bold text-ink/55">
+          <span>Plateia esquerda: 96 lugares</span>
+          <span>Plateia central: 320 lugares</span>
+          <span>Plateia direita: 96 lugares</span>
+          <span>2º piso: 128 lugares</span>
+          <span>Total: {seats.length || 640} lugares</span>
         </div>
       </div>
     </div>

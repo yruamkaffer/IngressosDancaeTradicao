@@ -1,4 +1,4 @@
-﻿import { requestHasAdminSession } from "@/lib/admin-auth";
+import { requestHasAdminSession } from "@/lib/admin-auth";
 import { fail, friendlyDatabaseError, ok } from "@/lib/api";
 import { maskCpf } from "@/lib/format";
 import { relationLabel } from "@/lib/supabase/relations";
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   const ticketCode = typeof body?.ticketCode === "string" ? body.ticketCode.trim() : "";
 
   if (!ticketCode) {
-    return fail("Informe o codigo do ticket.", 422);
+    return fail("Informe o código do ticket.", 422);
   }
 
   const supabase = getSupabaseAdmin();
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
   const validation = Array.isArray(data) ? data[0] : data;
   if (!validation) {
-    return fail("Ticket nao encontrado.", 404);
+    return fail("Ticket não encontrado.", 404);
   }
 
   const { data: order, error: orderError } = await supabase
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   if (orderError) {
-    return fail("Ticket validado, mas nao foi possivel carregar o pedido.", 500, orderError.message);
+    return fail("Ticket validado, mas não foi possível carregar o pedido.", 500, orderError.message);
   }
 
   return ok({

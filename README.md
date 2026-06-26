@@ -51,9 +51,11 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 2. Abra o SQL Editor.
 3. Execute `database/schema.sql`.
 4. Execute `database/seed.sql`.
+
+Se o banco ja existia com o mapa antigo e ainda nao ha pedidos reais, execute `database/seat-map-640.sql` no SQL Editor para recriar os 640 assentos.
 5. Copie `Project URL`, `anon key` e `service_role key` para `.env.local`.
 
-O seed cria o evento com o mesmo `id` definido em `src/config/event.ts` e cria assentos A1 ate E10.
+O seed cria o evento com o mesmo `id` definido em `src/config/event.ts` e cria 640 assentos: 96 na plateia esquerda, 320 na plateia central, 96 na plateia direita e 128 no 2º piso.
 
 ## Reserva sem venda duplicada
 

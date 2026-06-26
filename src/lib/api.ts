@@ -21,19 +21,19 @@ export function friendlyDatabaseError(message?: string) {
   }
 
   if (message.includes("SEAT_NOT_AVAILABLE")) {
-    return "Esse assento acabou de ficar indisponivel. Escolha outro assento.";
+    return "Esse assento acabou de ficar indisponível. Escolha outro assento.";
   }
   if (message.includes("SEAT_NOT_FOUND")) {
-    return "Assento nao encontrado.";
+    return "Assento não encontrado.";
   }
   if (message.includes("ORDER_NOT_FOUND")) {
-    return "Reserva nao encontrada.";
+    return "Reserva não encontrada.";
   }
   if (message.includes("ORDER_NOT_PENDING")) {
     return "Somente reservas aguardando pagamento podem ser alteradas.";
   }
   if (message.includes("TICKET_NOT_FOUND")) {
-    return "Ticket nao encontrado.";
+    return "Ticket não encontrado.";
   }
 
   return message;

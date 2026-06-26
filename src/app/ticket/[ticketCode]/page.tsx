@@ -1,4 +1,4 @@
-﻿import { CalendarDays, MapPin, QrCode, TicketCheck } from "lucide-react";
+import { CalendarDays, MapPin, QrCode, TicketCheck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -102,7 +102,7 @@ export default async function TicketPage({ params }: { params: { ticketCode: str
               <QrCode className="h-24 w-24 text-curtain" />
             </div>
             <div className="mt-4 break-all text-center text-lg font-black text-ink">{ticket.ticket_code}</div>
-            <p className="mt-2 text-center text-xs text-ink/60">Valide este codigo na entrada.</p>
+            <p className="mt-2 text-center text-xs text-ink/60">Valide este código na entrada.</p>
             <Link href="/" className="btn btn-secondary mt-5 w-full">
               <TicketCheck className="h-4 w-4" />
               Ver evento
