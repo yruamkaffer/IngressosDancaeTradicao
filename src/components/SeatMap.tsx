@@ -32,6 +32,8 @@ type TheaterSection = SeatSection | AisleSection;
 const mainRows = Array.from("ABCDEFGHIJKLMNOP");
 const balconyRows = Array.from("ABCDEFGH");
 
+const officialSectors = new Set(["Plateia esquerda", "Plateia central", "Plateia direita", "2º piso"]);
+
 const mainFloor: TheaterSection[] = [
   { type: "seats", sector: "Plateia esquerda", title: "Esquerda", columns: 6, rows: mainRows },
   { type: "aisle", title: "Corredor" },
@@ -65,7 +67,11 @@ function formatSeatNumber(number: number) {
 }
 
 function sectionWidth(columns: number) {
-  return `${columns * 1.8 + Math.max(columns - 1, 0) * 0.25 + 2.4}rem`;
+  return `${columns * 1.65 + Math.max(columns - 1, 0) * 0.2 + 2.2}rem`;
+}
+
+function rowSort(left: string, right: string) {
+  return left.localeCompare(right, "pt-BR", { numeric: true });
 }
 
 export function SeatMap({
@@ -94,9 +100,45 @@ export function SeatMap({
     return grouped;
   }, [seats]);
 
-  function renderSeatButton(seat: Seat | undefined, fallbackNumber: number) {
+  const legacySections = useMemo<SeatSection[]>(() => {
+    const bySector = new Map<string, Map<string, Seat[]>>();
+
+    for (const seat of seats) {
+      if (officialSectors.has(seat.sector)) {
+        continue;
+      }
+
+      const sectorRows = bySector.get(seat.sector) ?? new Map<string, Seat[]>();
+      const rowSeats = sectorRows.get(seat.row) ?? [];
+      rowSeats.push(seat);
+      sectorRows.set(seat.row, rowSeats);
+      bySector.set(seat.sector, sectorRows);
+    }
+
+    return Array.from(bySector.entries())
+      .sort(([left], [right]) => left.localeCompare(right, "pt-BR"))
+      .map(([sector, rows]) => {
+        const sortedRows = Array.from(rows.keys()).sort(rowSort);
+        const columns = Math.max(
+          1,
+          ...Array.from(rows.values()).map((rowSeats) => rowSeats.length)
+        );
+
+        return {
+          type: "seats",
+          sector,
+          title: sector,
+          columns,
+          rows: sortedRows
+        };
+      });
+  }, [seats]);
+
+  const hasOfficialSeats = seats.some((seat) => officialSectors.has(seat.sector));
+
+  function renderSeatButton(seat: Seat | undefined, fallbackNumber: number, emptyKey: string) {
     if (!seat) {
-      return <div key={`empty-${fallbackNumber}`} className="h-7 w-7" aria-hidden />;
+      return <div key={emptyKey} className="h-7 w-7" aria-hidden />;
     }
 
     const selected = seat.id === selectedSeatId;
@@ -166,7 +208,11 @@ export function SeatMap({
 
   function renderSeatSection(section: SeatSection) {
     return (
-      <div key={section.sector} className="rounded-lg border border-line bg-white/85 p-3" style={{ width: sectionWidth(section.columns) }}>
+      <div
+        key={section.sector}
+        className="rounded-lg border border-line bg-white/85 p-3"
+        style={{ width: sectionWidth(section.columns) }}
+      >
         <div className="mb-3 text-center text-xs font-black uppercase tracking-[0.14em] text-curtain">
           {section.title}
         </div>
@@ -178,10 +224,10 @@ export function SeatMap({
                 <div className="text-center text-[11px] font-black text-curtain">{row}</div>
                 <div
                   className="grid gap-1"
-                  style={{ gridTemplateColumns: `repeat(${section.columns}, minmax(1.75rem, 1.75rem))` }}
+                  style={{ gridTemplateColumns: `repeat(${section.columns}, minmax(1.6rem, 1.6rem))` }}
                 >
                   {Array.from({ length: section.columns }, (_, index) =>
-                    renderSeatButton(rowSeats[index], index + 1)
+                    renderSeatButton(rowSeats[index], index + 1, `${section.sector}-${row}-${index}`)
                   )}
                 </div>
               </div>
@@ -192,19 +238,37 @@ export function SeatMap({
     );
   }
 
+  if (!hasOfficialSeats && legacySections.length > 0) {
+    return (
+      <div className="w-full max-w-full overflow-x-auto rounded-lg border border-line bg-white/70 p-4">
+        <div className="inline-block min-w-full align-top">
+          <div className="mx-auto mb-5 rounded-md border border-curtain/20 bg-gradient-to-r from-curtain via-rose to-stage px-4 py-3 text-center text-sm font-bold uppercase tracking-[0.18em] text-white">
+            PALCO
+          </div>
+          <div className="flex w-max max-w-none gap-4">
+            {legacySections.map((section) => renderSeatSection(section))}
+          </div>
+          <div className="mt-4 text-center text-xs font-bold text-ink/55">
+            Mapa temporário com {seats.length} assentos carregados.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-line bg-white/70 p-4">
-      <div className="mx-auto min-w-[1130px] max-w-7xl">
+    <div className="w-full max-w-full overflow-x-auto rounded-lg border border-line bg-white/70 p-4">
+      <div className="w-max max-w-none align-top">
         <div className="mx-auto mb-5 max-w-4xl rounded-md border border-curtain/20 bg-gradient-to-r from-curtain via-rose to-stage px-4 py-3 text-center text-sm font-bold uppercase tracking-[0.18em] text-white">
           PALCO
         </div>
 
-        <div className="flex items-stretch justify-center gap-4">
+        <div className="flex items-stretch justify-center gap-3">
           {mainFloor.map((section, index) =>
             section.type === "aisle" ? (
               <div
                 key={`${section.title}-${index}`}
-                className="flex w-16 items-center justify-center rounded-lg border border-dashed border-line bg-mist/70 text-[11px] font-black uppercase tracking-[0.16em] text-ink/50 [writing-mode:vertical-rl]"
+                className="flex w-12 items-center justify-center rounded-lg border border-dashed border-line bg-mist/70 text-[10px] font-black uppercase tracking-[0.16em] text-ink/50 [writing-mode:vertical-rl]"
               >
                 {section.title}
               </div>

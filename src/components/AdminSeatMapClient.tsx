@@ -25,7 +25,7 @@ export function AdminSeatMapClient({ seats }: { seats: Seat[] }) {
   }
 
   return (
-    <div className="card p-5">
+    <div className="card min-w-0 overflow-hidden p-5">
       <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-ink">Mapa administrativo</h1>

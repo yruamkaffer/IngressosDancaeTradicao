@@ -86,8 +86,8 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
-      <form onSubmit={handleSubmit} className="card h-fit p-5">
+    <div className="grid min-w-0 gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
+      <form onSubmit={handleSubmit} className="card h-fit min-w-0 p-5">
         <div className="mb-5 flex items-center gap-3">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-curtain text-white">
             <UserRound className="h-5 w-5" />
@@ -161,7 +161,7 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
         </div>
       </form>
 
-      <section className="card p-5">
+      <section className="card min-w-0 overflow-hidden p-5">
         <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <h2 className="text-xl font-bold text-ink">Mapa do teatro</h2>
