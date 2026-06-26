@@ -1,19 +1,20 @@
-﻿import { Armchair, Banknote, Lock, TicketCheck, Timer, WalletCards } from "lucide-react";
+import { Armchair, Banknote, Lock, TicketCheck, Timer, WalletCards } from "lucide-react";
 import Link from "next/link";
 import { ReservationActions } from "@/components/ReservationActions";
 import { StatusBadge } from "@/components/StatusBadge";
 import { eventConfig } from "@/config/event";
 import { formatCurrency, formatPhone, maskCpf } from "@/lib/format";
+import { getEventSeatsWithEffectiveStatus } from "@/lib/seats";
 import { relationLabel, relationTicketCode } from "@/lib/supabase/relations";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
-import type { AdminOrder, Seat } from "@/types/domain";
+import type { AdminOrder } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
 
 async function getDashboardData() {
   const supabase = getSupabaseAdmin();
-  const [{ data: seats, error: seatsError }, { data: orders, error: ordersError }] = await Promise.all([
-    supabase.from("seats").select("*").eq("event_id", eventConfig.id),
+  const [seats, { data: orders, error: ordersError }] = await Promise.all([
+    getEventSeatsWithEffectiveStatus(),
     supabase
       .from("orders")
       .select("*,seats(label),tickets(ticket_code)")
@@ -21,15 +22,12 @@ async function getDashboardData() {
       .order("created_at", { ascending: false })
   ]);
 
-  if (seatsError) {
-    throw new Error(seatsError.message);
-  }
   if (ordersError) {
     throw new Error(ordersError.message);
   }
 
   return {
-    seats: (seats ?? []) as Seat[],
+    seats,
     orders: (orders ?? []) as AdminOrder[]
   };
 }
@@ -65,11 +63,13 @@ export default async function AdminDashboardPage() {
   const paidOrders = orders.filter((order) => order.status === "paid");
   const pendingOrders = orders.filter((order) => order.status === "pending_payment");
 
+  const pendingReservationCount = new Set(pendingOrders.map((order) => order.reservation_code.trim().toUpperCase())).size;
+
   const stats = {
     total: seats.length,
     available: seats.filter((seat) => seat.status === "available").length,
-    pending: pendingOrders.length,
-    sold: seats.filter((seat) => seat.status === "sold").length,
+    pending: pendingReservationCount,
+    sold: paidOrders.length,
     blocked: seats.filter((seat) => seat.status === "blocked").length,
     revenue: paidOrders.length * eventConfig.ticketPrice
   };
@@ -123,7 +123,7 @@ export default async function AdminDashboardPage() {
                     </td>
                     <td className="font-bold text-ink">{relationLabel(order.seats)}</td>
                     <td>
-                      <ReservationActions orderId={order.id} />
+                      <ReservationActions orderId={order.id} showDelete />
                     </td>
                   </tr>
                 ))}

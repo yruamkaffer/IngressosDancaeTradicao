@@ -1,24 +1,10 @@
 import { AdminSeatMapClient } from "@/components/AdminSeatMapClient";
-import { eventConfig } from "@/config/event";
-import { getSupabaseAdmin } from "@/lib/supabase/server";
-import type { Seat } from "@/types/domain";
+import { getEventSeatsWithEffectiveStatus } from "@/lib/seats";
 
 export const dynamic = "force-dynamic";
 
 async function getSeats() {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("seats")
-    .select("*")
-    .eq("event_id", eventConfig.id)
-    .order("row", { ascending: true })
-    .order("number", { ascending: true });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return (data ?? []) as Seat[];
+  return getEventSeatsWithEffectiveStatus();
 }
 
 export default async function AdminAssentosPage() {

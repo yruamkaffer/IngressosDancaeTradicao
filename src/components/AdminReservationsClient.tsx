@@ -170,14 +170,17 @@ export function AdminReservationsClient({
                   <td>{order.status === "paid" ? formatCurrency(ticketPrice * order.seatCount) : "-"}</td>
                   <td>
                     {order.status === "pending_payment" ? (
-                      <ReservationActions orderId={order.id} />
+                      <ReservationActions orderId={order.id} showDelete />
                     ) : order.status === "paid" ? (
-                      <a href={`/api/tickets/${order.reservationCode}/pdf`} className="btn btn-secondary min-h-10 px-3 py-2 text-sm">
-                        <Download className="h-4 w-4" />
-                        PDF
-                      </a>
+                      <div className="flex flex-wrap gap-2">
+                        <a href={`/api/tickets/${order.id}/pdf?by=order`} className="btn btn-secondary min-h-10 px-3 py-2 text-sm">
+                          <Download className="h-4 w-4" />
+                          PDF
+                        </a>
+                        <ReservationActions orderId={order.id} showConfirm={false} showCancel={false} showDelete />
+                      </div>
                     ) : (
-                      <span className="text-sm text-ink/50">Sem acao</span>
+                      <ReservationActions orderId={order.id} showConfirm={false} showCancel={false} showDelete />
                     )}
                   </td>
                 </tr>

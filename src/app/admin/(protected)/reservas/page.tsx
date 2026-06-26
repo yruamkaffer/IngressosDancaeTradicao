@@ -13,6 +13,10 @@ function hashCpf(cpf: string) {
   return createHash("sha256").update(cpf.replace(/\D/g, "")).digest("hex");
 }
 
+function normalizeReservationCode(code: string) {
+  return code.trim().toUpperCase();
+}
+
 function groupedStatus(statuses: string[]) {
   if (statuses.every((status) => status === "paid")) {
     return "paid";
@@ -37,9 +41,10 @@ async function getOrders() {
 
   const groups = new Map<string, AdminOrder[]>();
   for (const order of (data ?? []) as AdminOrder[]) {
-    const list = groups.get(order.reservation_code) ?? [];
+    const reservationCode = normalizeReservationCode(order.reservation_code);
+    const list = groups.get(reservationCode) ?? [];
     list.push(order);
-    groups.set(order.reservation_code, list);
+    groups.set(reservationCode, list);
   }
 
   return Array.from(groups.values()).map<AdminReservationRow>((orders) => {
@@ -49,7 +54,7 @@ async function getOrders() {
 
     return {
       id: first.id,
-      reservationCode: first.reservation_code,
+      reservationCode: normalizeReservationCode(first.reservation_code),
       buyerName: first.buyer_name,
       buyerPhone: formatPhone(first.buyer_phone),
       buyerEmail: first.buyer_email ?? "",

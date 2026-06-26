@@ -19,22 +19,34 @@ export type ReservationBundle = {
   createdAt: string;
 };
 
-export async function getReservationBundle(reservationCode: string): Promise<ReservationBundle | null> {
-  const supabase = getSupabaseAdmin();
-  const code = reservationCode.toUpperCase();
+type ReservationOrder = {
+  id: string;
+  buyer_name: string;
+  buyer_phone: string;
+  buyer_cpf: string;
+  buyer_email: string | null;
+  reservation_code: string;
+  status: string;
+  created_at: string;
+  seats: { label?: string | null } | Array<{ label?: string | null }> | null;
+  tickets: { ticket_code?: string | null } | Array<{ ticket_code?: string | null }> | null;
+};
 
-  const { data, error } = await supabase
-    .from("orders")
-    .select("id,buyer_name,buyer_phone,buyer_cpf,buyer_email,reservation_code,status,created_at,seats(label),tickets(ticket_code)")
-    .eq("event_id", eventConfig.id)
-    .eq("reservation_code", code)
-    .order("created_at", { ascending: true });
+function normalizeReservationCode(value: string) {
+  const trimmed = value.trim();
 
-  if (error) {
-    throw new Error(error.message);
+  try {
+    return decodeURIComponent(trimmed).trim().toUpperCase();
+  } catch {
+    return trimmed.toUpperCase();
   }
+}
 
-  const orders = data ?? [];
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function buildReservationBundle(orders: ReservationOrder[]): ReservationBundle | null {
   const firstOrder = orders[0];
   if (!firstOrder) {
     return null;
@@ -67,4 +79,48 @@ export async function getReservationBundle(reservationCode: string): Promise<Res
     totalFormatted: formatCurrency(total),
     createdAt: firstOrder.created_at
   };
+}
+
+export async function getReservationBundle(reservationCode: string): Promise<ReservationBundle | null> {
+  const supabase = getSupabaseAdmin();
+  const code = normalizeReservationCode(reservationCode);
+
+  if (!code) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select("id,buyer_name,buyer_phone,buyer_cpf,buyer_email,reservation_code,status,created_at,seats(label),tickets(ticket_code)")
+    .ilike("reservation_code", code)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return buildReservationBundle((data ?? []) as ReservationOrder[]);
+}
+
+export async function getReservationBundleByOrderId(orderId: string): Promise<ReservationBundle | null> {
+  if (!isUuid(orderId)) {
+    return null;
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("orders")
+    .select("reservation_code")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data?.reservation_code) {
+    return null;
+  }
+
+  return getReservationBundle(data.reservation_code);
 }

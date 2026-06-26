@@ -32,8 +32,9 @@ type TheaterSection = SeatSection | AisleSection;
 
 const mainRows = Array.from("ABCDEFGHIJKLMNOP");
 const balconyRows = Array.from("ABCDEFGH");
+const balconySector = "2\u00ba piso";
 
-const officialSectors = new Set(["Plateia esquerda", "Plateia central", "Plateia direita", "2º piso"]);
+const officialSectors = new Set(["Plateia esquerda", "Plateia central", "Plateia direita", balconySector]);
 
 const mainFloor: TheaterSection[] = [
   { type: "seats", sector: "Plateia esquerda", title: "Esquerda", columns: 6, rows: mainRows },
@@ -45,22 +46,30 @@ const mainFloor: TheaterSection[] = [
 
 const balcony: SeatSection = {
   type: "seats",
-  sector: "2º piso",
-  title: "2º piso",
+  sector: balconySector,
+  title: balconySector,
   columns: 16,
   rows: balconyRows
 };
 
 const statusClasses: Record<SeatStatus, string> = {
   available:
-    "border-teal bg-teal/10 text-teal hover:bg-teal hover:text-white hover:shadow-md",
-  reserved: "cursor-not-allowed border-brass bg-brass/25 text-ink/55",
-  sold: "cursor-not-allowed border-curtain bg-curtain text-white",
-  blocked: "cursor-not-allowed border-ink bg-ink/15 text-ink/45"
+    "border-stage bg-white text-stage hover:bg-stage hover:text-white hover:shadow-md",
+  reserved: "cursor-not-allowed border-[#8b5cf6] bg-[#ede9fe] text-[#5b21b6]",
+  sold: "cursor-not-allowed border-[#4c1d95] bg-[#4c1d95] text-white shadow-inner",
+  blocked: "cursor-not-allowed border-[#17142a] bg-[#17142a] text-white opacity-90"
 };
 
+function normalizeSectorName(sector: string) {
+  return sector.trim().replace("2\u00c2\u00ba", "2\u00ba");
+}
+
+function normalizeSeatStatus(status: string): SeatStatus {
+  return status === "reserved" || status === "sold" || status === "blocked" ? status : "available";
+}
+
 function sectorRowKey(sector: string, row: string) {
-  return `${sector}::${row}`;
+  return `${normalizeSectorName(sector)}::${row}`;
 }
 
 function formatSeatNumber(number: number) {
@@ -111,7 +120,7 @@ export function SeatMap({
     const bySector = new Map<string, Map<string, Seat[]>>();
 
     for (const seat of seats) {
-      if (officialSectors.has(seat.sector)) {
+      if (officialSectors.has(normalizeSectorName(seat.sector))) {
         continue;
       }
 
@@ -141,26 +150,27 @@ export function SeatMap({
       });
   }, [seats]);
 
-  const hasOfficialSeats = seats.some((seat) => officialSectors.has(seat.sector));
+  const hasOfficialSeats = seats.some((seat) => officialSectors.has(normalizeSectorName(seat.sector)));
 
-  function renderSeatButton(seat: Seat | undefined, fallbackNumber: number, emptyKey: string) {
+  function renderSeatButton(seat: Seat | undefined, emptyKey: string) {
     if (!seat) {
       return <div key={emptyKey} className="h-6 w-6" aria-hidden />;
     }
 
-    const selected = selectedIds.has(seat.id);
-    const disabled = seat.status !== "available";
+    const seatStatus = normalizeSeatStatus(seat.status);
+    const selected = seatStatus === "available" && selectedIds.has(seat.id);
+    const disabled = seatStatus !== "available";
     const isBusy = busySeatId === seat.id;
     const className = selected
       ? "border-stage bg-stage text-white shadow-md ring-2 ring-stage/25"
-      : statusClasses[seat.status];
+      : statusClasses[seatStatus];
 
     return (
       <div key={seat.id} className="flex flex-col items-center gap-1">
         <button
           type="button"
-          aria-label={`Assento ${seat.label}, ${seat.status}`}
-          title={seat.label}
+          aria-label={`Assento ${seat.label}, ${seatStatus}`}
+          title={`${seat.label} - ${seatStatus}`}
           disabled={!adminMode && disabled}
           onClick={() => {
             if (adminMode) {
@@ -170,8 +180,9 @@ export function SeatMap({
               onSelect?.(seat);
             }
           }}
+          data-status={seatStatus}
           className={`flex h-6 w-6 items-center justify-center rounded-md border text-[9px] font-black leading-none transition ${className} ${
-            !adminMode && disabled ? "opacity-75" : ""
+            !adminMode && disabled ? "opacity-90" : ""
           }`}
         >
           {isBusy ? "..." : formatSeatNumber(seat.number)}
@@ -179,7 +190,7 @@ export function SeatMap({
 
         {adminMode && (
           <div className="h-6">
-            {seat.status === "available" && (
+            {seatStatus === "available" && (
               <button
                 type="button"
                 onClick={() => onBlock?.(seat)}
@@ -190,7 +201,7 @@ export function SeatMap({
                 <Lock className="h-3 w-3" />
               </button>
             )}
-            {seat.status === "blocked" && (
+            {seatStatus === "blocked" && (
               <button
                 type="button"
                 onClick={() => onUnblock?.(seat)}
@@ -201,11 +212,11 @@ export function SeatMap({
                 <Unlock className="h-3 w-3" />
               </button>
             )}
-            {seat.status === "reserved" && (
-              <Armchair className="mx-auto h-4 w-4 text-brass" aria-hidden />
+            {seatStatus === "reserved" && (
+              <Armchair className="mx-auto h-4 w-4 text-[#8b5cf6]" aria-hidden />
             )}
-            {seat.status === "sold" && (
-              <Armchair className="mx-auto h-4 w-4 text-curtain" aria-hidden />
+            {seatStatus === "sold" && (
+              <Armchair className="mx-auto h-4 w-4 text-[#4c1d95]" aria-hidden />
             )}
           </div>
         )}
@@ -234,7 +245,7 @@ export function SeatMap({
                   style={{ gridTemplateColumns: `repeat(${section.columns}, minmax(1.5rem, 1.5rem))` }}
                 >
                   {Array.from({ length: section.columns }, (_, index) =>
-                    renderSeatButton(rowSeats[index], index + 1, `${section.sector}-${row}-${index}`)
+                    renderSeatButton(rowSeats[index], `${section.sector}-${row}-${index}`)
                   )}
                 </div>
               </div>
@@ -287,7 +298,7 @@ export function SeatMap({
 
         <div className="mt-6 rounded-lg border-2 border-rose/55 bg-white/85 p-4">
           <div className="mb-3 text-center text-sm font-black uppercase tracking-[0.16em] text-rose">
-            2º piso
+            {balconySector}
           </div>
           <div className="flex justify-center">{renderSeatSection(balcony)}</div>
         </div>
@@ -296,7 +307,7 @@ export function SeatMap({
           <span>Plateia esquerda: 96 lugares</span>
           <span>Plateia central: 320 lugares</span>
           <span>Plateia direita: 96 lugares</span>
-          <span>2º piso: 128 lugares</span>
+          <span>{balconySector}: 128 lugares</span>
           <span>Total: {seats.length || 640} lugares</span>
         </div>
       </div>

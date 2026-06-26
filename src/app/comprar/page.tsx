@@ -1,26 +1,14 @@
 import Link from "next/link";
 import { eventConfig } from "@/config/event";
 import { PurchaseClient } from "@/components/PurchaseClient";
-import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { getEventSeatsWithEffectiveStatus } from "@/lib/seats";
 import type { Seat } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 async function getSeats() {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("seats")
-    .select("*")
-    .eq("event_id", eventConfig.id)
-    .order("row", { ascending: true })
-    .order("number", { ascending: true });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return (data ?? []) as Seat[];
+  return getEventSeatsWithEffectiveStatus();
 }
 
 export default async function ComprarPage() {

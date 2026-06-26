@@ -4,7 +4,7 @@ import type { SeatStatus } from "@/types/domain";
 const items: Array<{ status: SeatStatus | "selected"; className: string; label: string }> = [
   {
     status: "available",
-    className: "border-teal bg-teal/10",
+    className: "border-stage bg-white",
     label: seatStatusLabel("available")
   },
   {
@@ -14,17 +14,17 @@ const items: Array<{ status: SeatStatus | "selected"; className: string; label: 
   },
   {
     status: "reserved",
-    className: "border-brass bg-brass/25",
+    className: "border-[#8b5cf6] bg-[#ede9fe]",
     label: seatStatusLabel("reserved")
   },
   {
     status: "sold",
-    className: "border-curtain bg-curtain text-white",
+    className: "border-[#4c1d95] bg-[#4c1d95]",
     label: seatStatusLabel("sold")
   },
   {
     status: "blocked",
-    className: "border-ink bg-ink/15",
+    className: "border-[#17142a] bg-[#17142a]",
     label: seatStatusLabel("blocked")
   }
 ];
