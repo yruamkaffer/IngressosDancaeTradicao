@@ -15,12 +15,12 @@ const requiredEnvNames = [
 function envStatus() {
   return requiredEnvNames.map((name) => ({
     name,
-    configured: Boolean(process.env[name])
+    configured: Boolean(process.env[name]?.trim())
   }));
 }
 
 function supabaseHost() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   if (!url) {
     return null;
   }
@@ -28,8 +28,23 @@ function supabaseHost() {
   try {
     return new URL(url).host;
   } catch {
-    return "URL invalida";
+    return "URL inválida";
   }
+}
+
+function describeError(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      cause: String(error.cause ?? "") || undefined
+    };
+  }
+
+  return {
+    name: "UnknownError",
+    message: String(error)
+  };
 }
 
 export async function GET() {
@@ -54,10 +69,11 @@ export async function GET() {
 
   try {
     const supabase = getSupabaseAdmin();
-    const { count, error } = await supabase
+    const { data, count, error } = await supabase
       .from("seats")
-      .select("id", { count: "exact", head: true })
-      .eq("event_id", eventConfig.id);
+      .select("id, sector", { count: "exact" })
+      .eq("event_id", eventConfig.id)
+      .range(0, 999);
 
     if (error) {
       return NextResponse.json(
@@ -76,6 +92,11 @@ export async function GET() {
       );
     }
 
+    const sectorCounts = (data ?? []).reduce<Record<string, number>>((acc, seat) => {
+      acc[seat.sector] = (acc[seat.sector] ?? 0) + 1;
+      return acc;
+    }, {});
+
     return NextResponse.json({
       ok: true,
       env,
@@ -84,8 +105,9 @@ export async function GET() {
         ok: true,
         host: supabaseHost(),
         eventId: eventConfig.id,
-        seatsExactCount: count ?? 0,
-        expectedSeats: 640
+        seatsExactCount: count ?? data?.length ?? 0,
+        expectedSeats: 640,
+        sectorCounts
       }
     });
   } catch (error) {
@@ -98,7 +120,7 @@ export async function GET() {
           ok: false,
           host: supabaseHost(),
           eventId: eventConfig.id,
-          error: error instanceof Error ? error.message : "Erro desconhecido."
+          error: describeError(error)
         }
       },
       { status: 500 }
