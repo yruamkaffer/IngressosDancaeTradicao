@@ -10,6 +10,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type { AdminOrder } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 async function getDashboardData() {
   const supabase = getSupabaseAdmin();

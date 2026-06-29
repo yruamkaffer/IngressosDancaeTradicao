@@ -1,4 +1,4 @@
-import { ArrowLeft, Download, MessageCircle, TicketCheck } from "lucide-react";
+import { ArrowLeft, Download, Home, MessageCircle, TicketCheck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/CopyButton";
@@ -9,6 +9,7 @@ import { firstRelation, relationTicketCode } from "@/lib/supabase/relations";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 export const runtime = "nodejs";
 
 async function getReservation(reservationCode: string) {
@@ -19,7 +20,7 @@ async function getReservation(reservationCode: string) {
       "id,buyer_name,buyer_phone,buyer_cpf,buyer_email,reservation_code,status,created_at,seats(label,status),tickets(ticket_code)"
     )
     .eq("event_id", eventConfig.id)
-    .eq("reservation_code", reservationCode.toUpperCase())
+    .ilike("reservation_code", reservationCode.trim().toUpperCase())
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -143,6 +144,10 @@ export default async function PagamentoPage({
               <MessageCircle className="h-4 w-4" />
               Enviar comprovante
             </a>
+            <Link href="/" className="btn btn-secondary">
+              <Home className="h-4 w-4" />
+              Voltar ao inicio
+            </Link>
           </div>
         </aside>
       </div>

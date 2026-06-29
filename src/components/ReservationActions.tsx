@@ -39,7 +39,7 @@ export function ReservationActions({
           ? `/api/admin/orders/${orderId}/cancel`
           : `/api/admin/orders/${orderId}/delete`;
 
-    const response = await fetch(endpoint, { method: "POST" });
+    const response = await fetch(endpoint, { method: "POST", cache: "no-store" });
     const payload = await response.json();
     setBusy(null);
 
@@ -53,6 +53,7 @@ export function ReservationActions({
     }
 
     router.refresh();
+    window.setTimeout(() => window.location.reload(), 250);
   }
 
   return (
