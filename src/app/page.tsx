@@ -94,9 +94,14 @@ export default function HomePage() {
             <div className="card p-5">
               <Ticket className="mb-3 h-5 w-5 text-rose" />
               <div className="text-sm font-bold uppercase text-ink/55">Ingresso</div>
-              <div className="mt-1 font-bold text-ink">Inteira {formatCurrency(eventConfig.ticketTypes.full.price)}</div>
-              <div className="text-sm font-bold text-ink/65">
-                Meia/promocional {formatCurrency(eventConfig.ticketTypes.half.price)}
+              <div className="mt-2 text-sm font-bold text-ink/55">
+                Inteira <span className="line-through">{formatCurrency(eventConfig.ticketTypes.full.price)}</span>
+              </div>
+              <div className="mt-1 text-3xl font-black text-rose">
+                Promocional {formatCurrency(eventConfig.ticketTypes.half.price)}
+              </div>
+              <div className="mt-1 text-xs font-bold uppercase text-teal">
+                Disponível para todos, sem exigência de comprovante
               </div>
             </div>
           </div>
@@ -215,18 +220,18 @@ export default function HomePage() {
             <div>
               <h2 className="text-3xl font-black text-ink">Compra simples, Pix e entrada por chegada</h2>
               <p className="mt-3 max-w-2xl leading-7 text-ink/72">
-                Escolha entre inteira ou meia/promocional, compre ate {eventConfig.maxSeatsPerOrder} ingressos e pague
-                pelo QR Code Pix correspondente. {eventConfig.arrivalNotice}
+                Escolha entre inteira ou promocional, compre até {eventConfig.maxSeatsPerOrder} ingressos e pague pelo
+                QR Code Pix correspondente. O ingresso promocional está disponível para todos, sem exigência de
+                comprovante. {eventConfig.arrivalNotice}
               </p>
             </div>
             <div className="card p-5">
               <div className="text-sm font-bold uppercase text-curtain">Fluxo do ingresso</div>
               <ol className="mt-3 space-y-2 text-sm text-ink/75">
                 <li>1. Preencha seus dados, email, tipo de ingresso e quantidade.</li>
-                <li>2. Pague pelo QR Code Pix de inteira ou meia/promocional.</li>
+                <li>2. Escolha inteira ou promocional e pague pelo QR Code Pix correspondente.</li>
                 <li>3. Envie o comprovante no WhatsApp da organização.</li>
-                <li>4. O admin confirma o pagamento e o PDF com QR Code do ticket e enviado por email.</li>
-                <li>5. Cortesias sao geradas apenas pela escola no painel admin.</li>
+                <li>4. A organização confirma o pagamento e o PDF com QR Code do ticket é enviado por email.</li>
               </ol>
               <Link href="/comprar" className="btn btn-primary mt-5 w-full">
                 <Ticket className="h-4 w-4" />

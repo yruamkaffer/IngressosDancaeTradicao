@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Sob a Luz da Dan\u00e7a | Ingressos",
-  description: "Venda de ingressos com inteira, meia/promocional, Pix e entrada por ordem de chegada.",
+  description: "Venda de ingressos com inteira, promocional, Pix e entrada por ordem de chegada.",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "32x32" },

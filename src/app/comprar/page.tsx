@@ -16,7 +16,7 @@ export default async function ComprarPage() {
     (seats) => ({ seats, error: null as string | null }),
     (error) => ({
       seats: [] as Seat[],
-      error: error instanceof Error ? error.message : "Nao foi possivel carregar a capacidade de ingressos."
+      error: error instanceof Error ? error.message : "Não foi possível carregar a capacidade de ingressos."
     })
   );
 
@@ -27,15 +27,15 @@ export default async function ComprarPage() {
           <Link href="/" className="text-sm font-bold text-teal hover:text-pine">
             Voltar ao evento
           </Link>
-          <h1 className="mt-4 text-2xl font-black text-ink">Nao foi possivel carregar a capacidade</h1>
+          <h1 className="mt-4 text-2xl font-black text-ink">Não foi possível carregar a capacidade</h1>
           <p className="mt-2 text-ink/70">
-            Verifique as variaveis de ambiente da Vercel e se o SQL do Supabase foi executado.
+            Verifique as variáveis de ambiente da Vercel e se o SQL do Supabase foi executado.
           </p>
           <pre className="mt-4 overflow-x-auto rounded-lg border border-line bg-mist p-3 text-sm text-rose">
             {result.error}
           </pre>
           <p className="mt-4 text-sm text-ink/65">
-            Abra <code>/api/health</code> na URL do site para ver o diagnostico sem expor chaves secretas.
+            Abra <code>/api/health</code> na URL do site para ver o diagnóstico sem expor chaves secretas.
           </p>
         </section>
       </main>

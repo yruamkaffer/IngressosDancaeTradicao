@@ -83,7 +83,7 @@ export default async function PagamentoPage({
             <div className="mb-5 rounded-lg border border-teal/25 bg-teal/10 p-4 text-teal">
               <div className="font-black">Pagamento confirmado.</div>
               <p className="mt-1 text-sm text-ink/75">
-                O PDF do ticket fica disponivel para download e tambem pode ser enviado ao email informado.
+                O PDF do ticket fica disponível para download e também pode ser enviado ao email informado.
               </p>
               <div className="mt-3 flex flex-wrap gap-3">
                 <a href={`/api/tickets/${firstOrder.reservation_code}/pdf`} className="btn btn-primary">
@@ -115,8 +115,8 @@ export default async function PagamentoPage({
               </dd>
             </div>
             <div className="rounded-lg border border-line bg-mist p-4 sm:col-span-2">
-              <dt className="text-sm font-bold uppercase text-ink/55">Assentos</dt>
-              <dd className="mt-1 font-bold text-ink">Distribuicao por ordem de chegada</dd>
+              <dt className="text-sm font-bold uppercase text-ink/55">Entrada</dt>
+              <dd className="mt-1 font-bold text-ink">Por ordem de chegada</dd>
               <dd className="text-sm text-ink/65">{eventConfig.arrivalNotice}</dd>
             </div>
             <div className="rounded-lg border border-line bg-mist p-4">
@@ -130,7 +130,7 @@ export default async function PagamentoPage({
           </dl>
 
           <div className="mt-6 rounded-lg border border-brass/35 bg-brass/15 p-4 text-sm leading-6 text-ink">
-            {eventConfig.pixInstructions} Seu ingresso sera liberado apos a confirmacao pela organizacao.
+            {eventConfig.pixInstructions} Seu ingresso será liberado após a confirmação pela organização.
           </div>
         </section>
 
@@ -161,7 +161,7 @@ export default async function PagamentoPage({
             </a>
             <Link href="/" className="btn btn-secondary">
               <Home className="h-4 w-4" />
-              Voltar ao inicio
+              Voltar ao início
             </Link>
           </div>
         </aside>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Gift, Loader2, Mail, Minus, Plus, Ticket, UserRound } from "lucide-react";
+import { ArrowRight, Loader2, Mail, Minus, Plus, Ticket, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { eventConfig, type TicketTypeId } from "@/config/event";
@@ -97,8 +97,8 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
             <div>
               <h1 className="text-2xl font-bold text-ink">Comprar ingresso</h1>
               <p className="text-sm text-ink/65">
-                Inteira {formatCurrency(eventConfig.ticketTypes.full.price)} ou meia/promocional{" "}
-                {formatCurrency(eventConfig.ticketTypes.half.price)}. Ate {eventConfig.maxSeatsPerOrder} ingressos por
+                Inteira {formatCurrency(eventConfig.ticketTypes.full.price)} ou promocional{" "}
+                {formatCurrency(eventConfig.ticketTypes.half.price)}. Até {eventConfig.maxSeatsPerOrder} ingressos por
                 compra.
               </p>
             </div>
@@ -109,7 +109,7 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
               {quantity} ingresso(s) {selectedTicket.label.toLowerCase()}
             </div>
             <div className="mt-1 font-black text-curtain">Total: {formatCurrency(totalPrice)}</div>
-            <div className="mt-1 text-xs text-ink/55">{availableCount} lugares disponiveis de {eventConfig.totalCapacity}.</div>
+            <div className="mt-1 text-xs text-ink/55">{availableCount} lugares disponíveis de {eventConfig.totalCapacity}.</div>
           </div>
         </div>
 
@@ -144,7 +144,9 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
                       {formatCurrency(ticket.price)}
                     </div>
                     <div className={`mt-1 text-sm ${active ? "text-white/75" : "text-ink/60"}`}>
-                      QR Code Pix especifico para este valor.
+                      {type === "half"
+                        ? "Qualquer pessoa pode comprar este ingresso. Não há exigência de comprovante."
+                        : "Valor inteiro do ingresso."}
                     </div>
                   </button>
                 );
@@ -204,7 +206,7 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
               onChange={(event) => setBuyerPhone(event.target.value)}
               inputMode="tel"
               autoComplete="tel"
-              placeholder="DDD + numero"
+              placeholder="DDD + número"
             />
             {errors.buyerPhone && <span className="mt-1 block text-sm text-rose">{errors.buyerPhone}</span>}
           </label>
@@ -217,7 +219,7 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
               onChange={(event) => setBuyerCpf(event.target.value)}
               inputMode="numeric"
               autoComplete="off"
-              placeholder="Somente numeros"
+              placeholder="Somente números"
             />
             {errors.buyerCpf && <span className="mt-1 block text-sm text-rose">{errors.buyerCpf}</span>}
           </label>
@@ -242,7 +244,7 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
                 <Mail className="h-4 w-4 text-stage" />
                 Envio do ticket
               </div>
-              O PDF sera enviado para este email apos confirmacao do pagamento pela organizacao.
+              O PDF será enviado para este email após a confirmação do pagamento pela organização.
             </div>
           </div>
         </div>
@@ -262,21 +264,6 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
           </button>
         </div>
       </form>
-
-      <section className="card min-w-0 p-5">
-        <div className="flex items-start gap-3">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-teal text-white">
-            <Gift className="h-5 w-5" />
-          </span>
-          <div>
-            <h2 className="text-lg font-bold text-ink">Ingresso cortesia</h2>
-            <p className="mt-1 text-sm leading-6 text-ink/65">
-              A cortesia da escola e gratuita, mas nao e emitida nesta compra publica. Ela so pode ser gerada pela
-              escola dentro do painel admin.
-            </p>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

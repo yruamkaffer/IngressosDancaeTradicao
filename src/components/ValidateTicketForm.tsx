@@ -90,7 +90,7 @@ export function ValidateTicketForm() {
               </div>
               <div>
                 <dt className="font-bold">Entrada</dt>
-                <dd>Assentos por ordem de chegada</dd>
+                <dd>Por ordem de chegada</dd>
               </div>
               <div>
                 <dt className="font-bold">Nome</dt>

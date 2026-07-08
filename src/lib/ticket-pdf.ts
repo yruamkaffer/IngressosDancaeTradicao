@@ -150,14 +150,14 @@ export function buildTicketPdf(bundle: ReservationBundle) {
     const column = index % 2;
     const row = Math.floor(index / 2);
     const x = column === 0 ? 42 : 307;
-    const y = 406 - row * 74;
+    const y = 360 - row * 70;
 
     return [
-      rect(x, y, 246, 64, "1 1 1"),
-      qrCode(x + 9, y + 7, 50, item, bundle),
-      text(x + 68, y + 48, 8, `TICKET ${index + 1}`, "F2", "0.29 0.11 0.56"),
-      text(x + 68, y + 33, 10, fitText(item.ticketCode, 22), "F3", "0.04 0.09 0.25"),
-      text(x + 68, y + 18, 8, fitText(`${item.ticketTypeLabel} - ${item.ticketPriceFormatted}`, 31), "F1", "0.31 0.31 0.42")
+      rect(x, y, 246, 68, "1 1 1"),
+      qrCode(x + 8, y + 6, 56, item, bundle),
+      text(x + 76, y + 50, 8, `TICKET ${index + 1}`, "F2", "0.29 0.11 0.56"),
+      text(x + 76, y + 34, 10, fitText(item.ticketCode, 22), "F3", "0.04 0.09 0.25"),
+      text(x + 76, y + 18, 8, fitText(`${item.ticketTypeLabel} - ${item.ticketPriceFormatted}`, 29), "F1", "0.31 0.31 0.42")
     ];
   });
 
@@ -168,8 +168,9 @@ export function buildTicketPdf(bundle: ReservationBundle) {
     logo ? image("Logo", 410, 766 - logoHeight / 2, logoWidth, logoHeight) : text(396, 768, 12, "DANCA & TRADICAO", "F2", "1 1 1"),
     text(42, 795, 10, "INGRESSO CONFIRMADO", "F2", "0.72 0.82 1"),
     text(42, 764, 28, eventConfig.name, "F2", "1 1 1"),
-    text(42, 740, 12, `${eventConfig.edition} | ${eventConfig.date} as ${eventConfig.time}`, "F1", "0.88 0.92 1"),
+    text(42, 740, 12, `${eventConfig.edition} | Data ${eventConfig.date} | Horario ${eventConfig.time}`, "F1", "0.88 0.92 1"),
     text(42, 722, 11, eventConfig.location, "F1", "0.88 0.92 1"),
+    text(42, 706, 10, eventConfig.city, "F1", "0.04 0.09 0.25"),
 
     rect(42, 646, 511, 52, "1 1 1"),
     rect(42, 646, 8, 52, "0.49 0.23 0.93"),
@@ -184,14 +185,14 @@ export function buildTicketPdf(bundle: ReservationBundle) {
     text(62, 573, 13, fitText(bundle.buyerName, 30), "F2"),
     text(62, 555, 9, fitText(`Email: ${bundle.buyerEmail || "Nao informado"}`, 38)),
     text(327, 594, 11, "Entrada", "F2", "0.15 0.39 0.92"),
-    text(327, 573, 12, `${bundle.seatCount} ingresso(s) - lugares por chegada`, "F2"),
+    text(327, 573, 12, `${bundle.seatCount} ingresso(s) - entrada por chegada`, "F2"),
     text(327, 555, 9, "Chegue cedo para garantir bons lugares."),
 
     rect(42, 486, 511, 42, "0.94 0.96 1"),
-    text(62, 510, 11, "Assentos nao numerados", "F2", "0.29 0.11 0.56"),
-    text(62, 494, 9, "A distribuicao dos lugares sera feita por ordem de chegada ao evento."),
+    text(62, 510, 11, "Entrada por ordem de chegada", "F2", "0.29 0.11 0.56"),
+    text(62, 494, 9, "Para garantir bons lugares, chegue cedo ao evento."),
 
-    text(42, 456, 12, "Tickets e QR Codes para catraca", "F2", "0.29 0.11 0.56"),
+    text(42, 456, 12, "QR Codes individuais para catraca", "F2", "0.29 0.11 0.56"),
     ...ticketCards,
 
     text(42, 34, 8, `${eventConfig.studioName} | ${eventConfig.school.address} | Contato: ${eventConfig.school.phone}`, "F1", "0.31 0.31 0.42")

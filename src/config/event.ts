@@ -42,8 +42,8 @@ export const eventConfig = {
     },
     half: {
       id: "half",
-      label: "Meia entrada / promocional",
-      description: "Meia entrada ou valor promocional",
+      label: "Promocional",
+      description: "Ingresso promocional sem exigência de comprovante",
       price: 35,
       pixQrCodeImage: "/pix-qrcode-meia.svg"
     },
@@ -61,7 +61,7 @@ export const eventConfig = {
   pixKey: "chave-pix-da-organizacao",
   pixReceiverName: "Dança & Tradição Studio de Danças",
   pixInstructions:
-    "Compras pelo app aceitam somente Pix. Escolha inteira ou meia/promocional e pague usando o QR Code exibido para o tipo selecionado.",
+    "Compras pelo app aceitam somente Pix. Escolha o ingresso inteiro ou promocional e pague usando o QR Code exibido para o tipo selecionado.",
   cashSalesNote: "Pagamento em dinheiro somente diretamente na escola.",
   whatsappPhone: "5511999999999",
   pixQrCodeImage: "/pix-qrcode-placeholder.svg",
@@ -81,7 +81,7 @@ export const eventConfig = {
     }
   ],
   arrivalNotice:
-    "Os assentos nao serao numerados na compra. A distribuicao dos lugares sera feita por ordem de chegada ao evento; para garantir bons lugares, chegue cedo."
+    "A entrada no teatro será por ordem de chegada. Para garantir bons lugares, chegue cedo ao evento."
 } as const;
 
 export type TicketTypeId = keyof typeof eventConfig.ticketTypes;
