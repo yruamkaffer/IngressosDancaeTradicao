@@ -5,11 +5,11 @@
 </p>
 
 <h3 align="center">
-  A ticket reservation MVP for dance events with seat selection, manual Pix validation and admin management.
+  A ticket reservation MVP for dance events with ticket types, manual Pix validation and admin management.
 </h3>
 
 <p align="center">
-  <strong>Next.js · TypeScript · Supabase · Tailwind CSS · Vercel · Seat Map · Manual Payment Flow</strong>
+  <strong>Next.js · TypeScript · Supabase · Tailwind CSS · Vercel · Ticket QR Code · Manual Payment Flow</strong>
 </p>
 
 <p align="center">
@@ -27,13 +27,13 @@
 
 **Dança & Tradição Tickets** is a web application MVP created to manage ticket reservations for a dance show.
 
-The system allows visitors to choose numbered seats on a theater map, fill in buyer information, reserve seats, pay manually via Pix and send proof of payment through WhatsApp. After manual payment confirmation by an administrator, the system marks the seat as sold and generates the final ticket.
+The system allows visitors to choose the ticket type, select the quantity, fill in buyer information, pay manually via the Pix QR Code for the selected value and send proof of payment through WhatsApp. After manual payment confirmation by an administrator, the system marks the ticket as sold and generates the final ticket with a QR Code for entrance validation.
 
 This project was designed for a real-world event scenario where simplicity, low cost and operational control are more important than a fully automated payment gateway.
 
 ### 🇧🇷 Descrição em Português
 
-O **Dança & Tradição Tickets** é um MVP para venda e reserva de ingressos de espetáculos de dança, com escolha de assentos numerados, pagamento via Pix, validação manual pelo WhatsApp, painel administrativo e geração de tickets após confirmação do pagamento.
+O **Dança & Tradição Tickets** é um MVP para venda e reserva de ingressos de espetáculos de dança, com opção de inteira, meia/promocional e cortesia administrativa, pagamento via Pix, validação pelo WhatsApp, painel administrativo e geração de tickets com QR Code após confirmação do pagamento.
 
 ---
 
@@ -42,12 +42,12 @@ O **Dança & Tradição Tickets** é um MVP para venda e reserva de ingressos de
 The main goal is to provide a simple and reliable ticket flow for an event organizer:
 
 1. The buyer accesses the event page.
-2. The buyer chooses one or more available seats.
+2. The buyer chooses full price or half/promotional ticket and the quantity.
 3. The buyer fills in name, phone, CPF and email.
 4. The system creates a reservation in the database.
 5. The buyer pays via Pix and sends the receipt through WhatsApp.
 6. The admin manually confirms the payment.
-7. The system marks seats as sold and creates the ticket.
+7. The system marks the internal capacity seats as sold and creates the ticket QR Codes.
 
 ---
 
@@ -59,22 +59,23 @@ The main goal is to provide a simple and reliable ticket flow for an event organ
 - 🗺️ Venue and location information
 - 📍 Google Maps integration
 - 🎟️ Ticket purchase flow
-- 💺 Interactive theater seat map
+- 🎟️ Ticket type selection: full price and half/promotional
 - 🧾 Buyer form with validation
 - 💰 Automatic total price calculation
 - ⏳ Reservation flow before payment confirmation
-- 📲 Pix + WhatsApp manual payment instructions
-- 🎫 Ticket page after admin confirmation
+- 📲 Pix QR Code by ticket type + WhatsApp manual proof flow
+- 🎫 Ticket page with QR Code after admin confirmation
+- 🚪 Clear notice that seats are distributed by arrival order at the event
 
 ### Admin Area
 
 - 🔐 Admin access protected by password/session cookie
 - 📊 Admin dashboard
-- 🔎 Search reservations by buyer data, reservation code, ticket or seat
+- 🔎 Search reservations by buyer data, reservation code, ticket or internal capacity seat
 - ✅ Manual payment confirmation
 - ❌ Reservation cancellation
-- 🚫 Seat blocking
-- 🔓 Seat unblocking
+- 🎁 Courtesy ticket generation by the school/admin
+- 🧮 Internal capacity control for 640 places
 - 📤 Paid orders CSV export
 - 🎫 Ticket validation
 - 🕒 Used ticket tracking
@@ -84,9 +85,10 @@ The main goal is to provide a simple and reliable ticket flow for an event organ
 - 🧠 Supabase database
 - 🧩 PostgreSQL functions for reservation and ticket logic
 - 🔒 Row Level Security enabled
-- 🪑 Seat status control: `available`, `reserved`, `sold`, `blocked`
+- 🪑 Internal seat/capacity status control: `available`, `reserved`, `sold`, `blocked`
+- 🎟️ Ticket type and value control: `full`, `half`, `courtesy`
 - 🎲 Unique reservation and ticket codes
-- 🧱 Database-level protection against duplicated active orders for the same seat
+- 🧱 Database-level protection against overselling internal capacity
 
 ---
 
@@ -94,17 +96,17 @@ The main goal is to provide a simple and reliable ticket flow for an event organ
 
 ```mermaid
 flowchart TD
-    A[Buyer opens event page] --> B[Chooses seats on theater map]
+    A[Buyer opens event page] --> B[Chooses ticket type and quantity]
     B --> C[Fills buyer information]
     C --> D[POST /api/orders/create]
-    D --> E[Supabase RPC reserve_seats]
-    E --> F[Seats become reserved]
-    F --> G[Buyer pays via Pix]
+    D --> E[Supabase RPC reserve_tickets_by_quantity]
+    E --> F[Internal capacity becomes reserved]
+    F --> G[Buyer pays through the Pix QR Code for the selected value]
     G --> H[Buyer sends receipt through WhatsApp]
     H --> I[Admin confirms payment]
-    I --> J[Seats become sold]
-    J --> K[Tickets are generated]
-    K --> L[Ticket can be validated at the event]
+    I --> J[Internal capacity becomes sold]
+    J --> K[Tickets with QR Codes are generated]
+    K --> L[Ticket QR Code can be validated at the event]
 ```
 
 ---
@@ -148,6 +150,7 @@ The application uses **Next.js App Router** for pages and API routes. Sensitive 
 | Technology | Usage |
 |---|---|
 | Lucide React | Icon library |
+| QRCode | Ticket QR Code generation |
 | ESLint | Code linting |
 | PostCSS | CSS processing |
 | Autoprefixer | CSS browser compatibility |
@@ -162,9 +165,12 @@ IngressosDancaeTradicao/
 ├── database/
 │   ├── schema.sql
 │   ├── seed.sql
-│   └── seat-map-640.sql
+│   ├── seat-map-640.sql
+│   └── ticket-types-courtesy-capacity.sql
 ├── public/
 │   ├── danca-tradicao-logo.png
+│   ├── pix-qrcode-inteira.svg
+│   ├── pix-qrcode-meia.svg
 │   ├── pix-qrcode-placeholder.svg
 │   ├── teatro-auditorio.jpg
 │   └── teatro-fachada.jpg
@@ -177,8 +183,8 @@ IngressosDancaeTradicao/
 │   │   └── page.tsx
 │   ├── components/
 │   │   ├── PurchaseClient.tsx
-│   │   ├── SeatLegend.tsx
-│   │   └── SeatMap.tsx
+│   │   ├── CourtesyTicketForm.tsx
+│   │   └── AdminSeatMapClient.tsx
 │   ├── config/
 │   │   └── event.ts
 │   ├── lib/
@@ -198,12 +204,14 @@ IngressosDancaeTradicao/
 | `src/config/event.ts` | Central event configuration |
 | `src/app/page.tsx` | Public event landing page |
 | `src/app/comprar/page.tsx` | Ticket purchase page |
-| `src/components/PurchaseClient.tsx` | Buyer form, seat selection and reservation submit |
-| `src/components/SeatMap.tsx` | Theater seat map component |
+| `src/components/PurchaseClient.tsx` | Buyer form, ticket type selection, quantity and reservation submit |
+| `src/components/CourtesyTicketForm.tsx` | Admin-only courtesy ticket generator |
+| `src/lib/ticket-qr.ts` | Ticket QR Code payload and rendering helpers |
 | `src/app/api/orders/create/route.ts` | API route responsible for creating reservations |
 | `src/lib/supabase/server.ts` | Server-side Supabase admin client |
 | `src/lib/admin-auth.ts` | Admin session/password helpers |
 | `database/schema.sql` | Database tables, indexes, functions and RLS setup |
+| `database/ticket-types-courtesy-capacity.sql` | Latest migration for ticket types, values, courtesy and hidden capacity control |
 
 ---
 
@@ -279,38 +287,42 @@ database/schema.sql
 database/seed.sql
 ```
 
-5. If needed, run the 640-seat map script:
+5. If needed, run the 640-seat capacity script:
 
 ```bash
 database/seat-map-640.sql
 ```
 
-The expected theater map contains:
+The current sales flow does not expose a public seat map. The 640 entries are kept only as internal capacity control:
 
-| Section | Seats |
+| Control | Seats |
 |---|---:|
-| Left orchestra | 96 |
-| Center orchestra | 320 |
-| Right orchestra | 96 |
-| Balcony / second floor | 128 |
+| Internal event capacity | 640 |
 | **Total** | **640** |
+
+6. Run the latest ticket type/courtesy migration:
+
+```bash
+database/ticket-types-courtesy-capacity.sql
+```
 
 ---
 
-## 🔒 Seat Reservation Safety
+## 🔒 Capacity Reservation Safety
 
 The reservation flow is not protected only by the frontend.
 
 The backend calls a Supabase/PostgreSQL function that:
 
 - checks buyer data
-- locks the selected seat row
-- verifies if the seat is still available
+- locks the next available internal capacity rows
+- verifies if enough capacity is still available
 - creates the order with `pending_payment`
-- changes the seat status to `reserved`
+- stores ticket type and ticket value
+- changes the internal capacity status to `reserved`
 - returns a unique reservation code
 
-The database also includes a partial unique index to prevent more than one active order for the same seat.
+The database also includes protections to prevent more than one active order for the same internal capacity seat.
 
 ---
 
@@ -321,10 +333,12 @@ Ticket generation happens only after manual payment confirmation.
 When the admin confirms a payment:
 
 1. the order status becomes `paid`
-2. the seat status becomes `sold`
-3. a unique ticket code is generated
-4. the ticket can be validated at the event entrance
+2. the internal capacity status becomes `sold`
+3. a unique ticket code and QR Code are generated
+4. the ticket QR Code can be validated at the event entrance
 5. the ticket receives a `used_at` timestamp after validation
+
+Courtesy tickets are generated only from the admin panel and are confirmed automatically with value `0`.
 
 ---
 
@@ -363,9 +377,9 @@ Runs TypeScript type checking without emitting files.
 | Route | Description |
 |---|---|
 | `/` | Public event landing page |
-| `/comprar` | Buyer form and seat map |
-| `/pagamento/[reservationCode]` | Pix and WhatsApp payment instructions |
-| `/ticket/[ticketCode]` | Ticket page after confirmation |
+| `/comprar` | Buyer form with ticket type and quantity |
+| `/pagamento/[reservationCode]` | Pix QR Code and WhatsApp payment instructions |
+| `/ticket/[ticketCode]` | Ticket page with QR Code after confirmation |
 
 ### Admin Routes
 
@@ -373,7 +387,7 @@ Runs TypeScript type checking without emitting files.
 |---|---|
 | `/admin` | Admin dashboard |
 | `/admin/reservas` | Reservation management and search |
-| `/admin/assentos` | Seat map management |
+| `/admin/assentos` | Internal capacity status overview |
 | `/admin/validar` | Ticket validation |
 
 ### API Routes
@@ -384,6 +398,7 @@ Runs TypeScript type checking without emitting files.
 | `GET /api/seats` | Returns seats and their current status |
 | `POST /api/orders/create` | Creates a reservation |
 | `GET /api/orders/[reservationCode]` | Returns reservation information |
+| `POST /api/admin/courtesy/create` | Creates and confirms courtesy tickets |
 | `POST /api/admin/orders/[id]/confirm-payment` | Confirms manual payment |
 | `POST /api/admin/orders/[id]/cancel` | Cancels a reservation |
 | `POST /api/admin/seats/[id]/block` | Blocks a seat |
@@ -401,7 +416,8 @@ Suggested QA artifacts:
 
 - Manual test plan
 - Test cases for reservation creation
-- Test cases for duplicated seat prevention
+- Test cases for capacity oversell prevention
+- Test cases for full price, half/promotional and courtesy tickets
 - Admin payment confirmation checklist
 - Ticket validation checklist
 - CSV export validation
@@ -413,11 +429,12 @@ Example scenarios:
 
 | Scenario | Expected Result |
 |---|---|
-| Buyer selects an available seat | Seat is added to the selected list |
-| Buyer selects more than the allowed limit | System prevents the selection |
+| Buyer selects full price or half/promotional ticket | Total is calculated with the selected value |
+| Buyer selects more than the 10-ticket limit | System prevents the selection |
 | Buyer submits invalid CPF | Form shows validation error |
-| Two buyers try the same seat | Only one active reservation is created |
-| Admin confirms payment | Order becomes paid and ticket is generated |
+| Two buyers try to reserve the last available capacity at the same time | Only available capacity is reserved |
+| Admin creates courtesy ticket | Ticket is confirmed with value `0` |
+| Admin confirms payment | Order becomes paid and ticket QR Code is generated |
 | Admin validates ticket twice | Second validation shows it was already used |
 
 ---
@@ -429,7 +446,9 @@ Example scenarios:
 3. Configure all environment variables.
 4. Deploy the project.
 5. Update `NEXT_PUBLIC_SITE_URL` with the final production URL.
-6. Replace the placeholder Pix QR Code with the real Pix QR Code image.
+6. Replace the placeholder Pix QR Code images with the real Pix QR Codes:
+   - `public/pix-qrcode-inteira.svg`
+   - `public/pix-qrcode-meia.svg`
 
 ---
 
@@ -437,7 +456,9 @@ Example scenarios:
 
 - Payment is 100% manual.
 - There is no Pix API, webhook or payment gateway in this version.
-- The QR Code image is a placeholder and must be replaced before production usage.
+- The Pix QR Code images are placeholders and must be replaced before production usage.
+- Ticket QR Codes are generated by the application and include ticket code, reservation code, CPF, buyer name, phone, ticket type and value.
+- Public buyers do not choose numbered seats; seats are distributed by arrival order at the event.
 - Pending reservations do not expire automatically yet.
 - The admin flow depends on `ADMIN_PASSWORD`.
 - CPF data should be handled carefully and should not be exposed unnecessarily.
@@ -458,10 +479,9 @@ Example scenarios:
 - [ ] Add proper authentication for admin users
 - [ ] Add rate limiting to public reservation endpoints
 - [ ] Add audit log for admin actions
-- [ ] Add ticket QR Code generation
 - [ ] Add payment gateway integration as a future optional module
 - [ ] Add dashboard charts for sales and occupancy
-- [ ] Improve accessibility for the seat map
+- [ ] Improve accessibility for the ticket purchase form
 - [ ] Add CI workflow with lint, typecheck and build
 
 ---
