@@ -72,7 +72,10 @@ export default async function AdminDashboardPage() {
     pending: pendingReservationCount,
     sold: paidOrders.length,
     blocked: seats.filter((seat) => seat.status === "blocked").length,
-    revenue: paidOrders.length * eventConfig.ticketPrice
+    revenue: paidOrders.reduce((sum, order) => {
+      const ticketType = order.ticket_type === "half" ? "half" : order.ticket_type === "courtesy" ? "courtesy" : "full";
+      return sum + Number(order.ticket_price ?? eventConfig.ticketTypes[ticketType].price);
+    }, 0)
   };
 
   return (
@@ -89,7 +92,7 @@ export default async function AdminDashboardPage() {
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Total de assentos" value={stats.total} icon={Armchair} tone="bg-curtain text-white" />
+        <StatCard label="Capacidade total" value={stats.total} icon={Armchair} tone="bg-curtain text-white" />
         <StatCard label="Disponiveis" value={stats.available} icon={TicketCheck} tone="bg-teal/12 text-teal" />
         <StatCard label="Reservas pendentes" value={stats.pending} icon={Timer} tone="bg-brass/25 text-ink" />
         <StatCard label="Ingressos vendidos" value={stats.sold} icon={WalletCards} tone="bg-stage/18 text-stage" />
@@ -109,7 +112,7 @@ export default async function AdminDashboardPage() {
                 <tr>
                   <th>Reserva</th>
                   <th>Comprador</th>
-                  <th>Assento</th>
+                  <th>Controle</th>
                   <th>Acoes</th>
                 </tr>
               </thead>
@@ -122,7 +125,7 @@ export default async function AdminDashboardPage() {
                       <div className="text-sm text-ink/65">{formatPhone(order.buyer_phone)}</div>
                       <div className="text-sm text-ink/65">{maskCpf(order.buyer_cpf)}</div>
                     </td>
-                    <td className="font-bold text-ink">{relationLabel(order.seats)}</td>
+                    <td className="font-bold text-ink">{relationLabel(order.seats) || "Interno"}</td>
                     <td>
                       <ReservationActions orderId={order.id} showDelete />
                     </td>
@@ -150,7 +153,7 @@ export default async function AdminDashboardPage() {
               <thead>
                 <tr>
                   <th>Comprador</th>
-                  <th>Assento</th>
+                  <th>Controle</th>
                   <th>Status</th>
                   <th>Ticket</th>
                 </tr>
@@ -160,7 +163,7 @@ export default async function AdminDashboardPage() {
                   return (
                     <tr key={order.id}>
                       <td className="font-bold text-ink">{order.buyer_name}</td>
-                      <td className="font-bold text-ink">{relationLabel(order.seats)}</td>
+                      <td className="font-bold text-ink">{relationLabel(order.seats) || "Interno"}</td>
                       <td>
                         <StatusBadge status={order.status} />
                       </td>

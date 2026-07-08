@@ -16,7 +16,7 @@ export default async function ComprarPage() {
     (seats) => ({ seats, error: null as string | null }),
     (error) => ({
       seats: [] as Seat[],
-      error: error instanceof Error ? error.message : "Nao foi possivel carregar os assentos."
+      error: error instanceof Error ? error.message : "Nao foi possivel carregar a capacidade de ingressos."
     })
   );
 
@@ -27,7 +27,7 @@ export default async function ComprarPage() {
           <Link href="/" className="text-sm font-bold text-teal hover:text-pine">
             Voltar ao evento
           </Link>
-          <h1 className="mt-4 text-2xl font-black text-ink">Nao foi possivel carregar os assentos</h1>
+          <h1 className="mt-4 text-2xl font-black text-ink">Nao foi possivel carregar a capacidade</h1>
           <p className="mt-2 text-ink/70">
             Verifique as variaveis de ambiente da Vercel e se o SQL do Supabase foi executado.
           </p>
@@ -54,11 +54,10 @@ export default async function ComprarPage() {
           <p className="mt-1 text-sm text-ink/65">{eventConfig.name}</p>
         </div>
         <p className="rounded-md border border-line bg-white/80 px-3 py-2 text-sm font-bold text-curtain">
-          Reserva sugerida: {eventConfig.reservationLimitMinutes} minutos
+          Capacidade controlada: {eventConfig.totalCapacity} lugares
         </p>
       </div>
       <PurchaseClient initialSeats={seats} />
     </main>
   );
 }
-

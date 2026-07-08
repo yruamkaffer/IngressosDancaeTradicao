@@ -1,6 +1,7 @@
 import { requestHasAdminSession } from "@/lib/admin-auth";
 import { fail, friendlyDatabaseError, ok } from "@/lib/api";
-import { maskCpf } from "@/lib/format";
+import { formatCurrency, maskCpf } from "@/lib/format";
+import { eventConfig } from "@/config/event";
 import { relationLabel } from "@/lib/supabase/relations";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type { NextRequest } from "next/server";
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
 
   const { data: order, error: orderError } = await supabase
     .from("orders")
-    .select("buyer_name,buyer_cpf,seats(label)")
+    .select("buyer_name,buyer_phone,buyer_cpf,ticket_type,ticket_price,seats(label)")
     .eq("id", validation.order_id)
     .maybeSingle();
 
@@ -43,12 +44,21 @@ export async function POST(request: NextRequest) {
     return fail("Ticket validado, mas não foi possível carregar o pedido.", 500, orderError.message);
   }
 
+  const ticketType = order?.ticket_type === "half" ? "half" : order?.ticket_type === "courtesy" ? "courtesy" : "full";
+  const ticketConfig = eventConfig.ticketTypes[ticketType];
+  const ticketPrice = Number(order?.ticket_price ?? ticketConfig.price);
+
   return ok({
     ticketCode: validation.ticket_code,
     alreadyUsed: validation.already_used,
     usedAt: validation.used_at,
     buyerName: order?.buyer_name ?? "",
     buyerCpfMasked: order?.buyer_cpf ? maskCpf(order.buyer_cpf) : "",
+    buyerPhone: order?.buyer_phone ?? "",
+    ticketType,
+    ticketTypeLabel: ticketConfig.label,
+    ticketValue: ticketPrice,
+    ticketValueFormatted: formatCurrency(ticketPrice),
     seatLabel: relationLabel(order?.seats)
   });
 }

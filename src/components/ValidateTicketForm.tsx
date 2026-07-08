@@ -9,6 +9,9 @@ type ValidationResult = {
   usedAt: string;
   buyerName: string;
   buyerCpfMasked: string;
+  buyerPhone: string;
+  ticketTypeLabel: string;
+  ticketValueFormatted: string;
   seatLabel: string;
 };
 
@@ -86,16 +89,28 @@ export function ValidateTicketForm() {
                 <dd>{result.ticketCode}</dd>
               </div>
               <div>
-                <dt className="font-bold">Assento</dt>
-                <dd>{result.seatLabel}</dd>
+                <dt className="font-bold">Entrada</dt>
+                <dd>Assentos por ordem de chegada</dd>
               </div>
               <div>
                 <dt className="font-bold">Nome</dt>
                 <dd>{result.buyerName}</dd>
               </div>
               <div>
+                <dt className="font-bold">Telefone</dt>
+                <dd>{result.buyerPhone}</dd>
+              </div>
+              <div>
                 <dt className="font-bold">CPF</dt>
                 <dd>{result.buyerCpfMasked}</dd>
+              </div>
+              <div>
+                <dt className="font-bold">Tipo</dt>
+                <dd>{result.ticketTypeLabel}</dd>
+              </div>
+              <div>
+                <dt className="font-bold">Valor</dt>
+                <dd>{result.ticketValueFormatted}</dd>
               </div>
               <div>
                 <dt className="font-bold">Uso registrado em</dt>

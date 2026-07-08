@@ -32,12 +32,36 @@ export const eventConfig = {
     rightsOwner: "Dança & Tradição Studio de Danças",
     developer: "Yruam Käffer de Faria"
   },
-  ticketPrice: 30,
-  maxSeatsPerOrder: 5,
+  ticketTypes: {
+    full: {
+      id: "full",
+      label: "Inteira",
+      description: "Ingresso inteiro",
+      price: 70,
+      pixQrCodeImage: "/pix-qrcode-inteira.svg"
+    },
+    half: {
+      id: "half",
+      label: "Meia entrada / promocional",
+      description: "Meia entrada ou valor promocional",
+      price: 35,
+      pixQrCodeImage: "/pix-qrcode-meia.svg"
+    },
+    courtesy: {
+      id: "courtesy",
+      label: "Cortesia da escola",
+      description: "Ingresso gratuito emitido exclusivamente pela escola no painel admin",
+      price: 0,
+      pixQrCodeImage: "/pix-qrcode-placeholder.svg"
+    }
+  },
+  ticketPrice: 70,
+  maxSeatsPerOrder: 10,
+  totalCapacity: 640,
   pixKey: "chave-pix-da-organizacao",
   pixReceiverName: "Dança & Tradição Studio de Danças",
   pixInstructions:
-    "Compras pelo app aceitam somente Pix. Para pagamento em dinheiro, compre diretamente na escola.",
+    "Compras pelo app aceitam somente Pix. Escolha inteira ou meia/promocional e pague usando o QR Code exibido para o tipo selecionado.",
   cashSalesNote: "Pagamento em dinheiro somente diretamente na escola.",
   whatsappPhone: "5511999999999",
   pixQrCodeImage: "/pix-qrcode-placeholder.svg",
@@ -56,5 +80,8 @@ export const eventConfig = {
       caption: "Palco frontal com plateia numerada"
     }
   ],
-  reservationLimitMinutes: 30
+  arrivalNotice:
+    "Os assentos nao serao numerados na compra. A distribuicao dos lugares sera feita por ordem de chegada ao evento; para garantir bons lugares, chegue cedo."
 } as const;
+
+export type TicketTypeId = keyof typeof eventConfig.ticketTypes;

@@ -21,13 +21,16 @@ export function friendlyDatabaseError(message?: string) {
   }
 
   if (message.includes("INVALID_SEAT_COUNT")) {
-    return "Escolha de 1 a 5 assentos por compra.";
+    return "Escolha de 1 a 10 ingressos por compra.";
+  }
+  if (message.includes("INVALID_TICKET_TYPE")) {
+    return "Escolha um tipo de ingresso valido.";
   }
   if (message.includes("INVALID_BUYER_DATA")) {
     return "Revise os dados do comprador.";
   }
   if (message.includes("SEAT_NOT_AVAILABLE")) {
-    return "Esse assento acabou de ficar indisponivel. Escolha outro assento.";
+    return "Nao ha lugares disponiveis suficientes para essa quantidade.";
   }
   if (message.includes("SEAT_NOT_FOUND")) {
     return "Assento nao encontrado.";

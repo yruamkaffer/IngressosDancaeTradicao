@@ -1,4 +1,4 @@
-import { eventConfig } from "@/config/event";
+import { eventConfig, type TicketTypeId } from "@/config/event";
 import { normalizeCpf, normalizePhone } from "@/lib/format";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -8,6 +8,8 @@ export function validateBuyer(input: {
   buyerPhone?: string;
   buyerCpf?: string;
   buyerEmail?: string;
+  ticketType?: string;
+  quantity?: number;
   seatId?: string;
   seatIds?: string[];
 }) {
@@ -16,6 +18,9 @@ export function validateBuyer(input: {
   const buyerPhone = normalizePhone(input.buyerPhone ?? "");
   const buyerCpf = normalizeCpf(input.buyerCpf ?? "");
   const buyerEmail = input.buyerEmail?.trim().toLowerCase() ?? "";
+  const ticketType = input.ticketType === "half" ? "half" : input.ticketType === "courtesy" ? "courtesy" : "full";
+  const requestedQuantity =
+    typeof input.quantity === "number" && Number.isFinite(input.quantity) ? Math.floor(input.quantity) : undefined;
   const seatIds = Array.from(
     new Set(
       (input.seatIds && input.seatIds.length > 0 ? input.seatIds : input.seatId ? [input.seatId] : [])
@@ -36,11 +41,16 @@ export function validateBuyer(input: {
   if (!emailPattern.test(buyerEmail)) {
     errors.buyerEmail = "Informe um email valido para envio do ticket.";
   }
-  if (seatIds.length === 0) {
-    errors.seatIds = "Escolha pelo menos um assento disponivel.";
+  const quantity = requestedQuantity ?? seatIds.length;
+
+  if (quantity < 1) {
+    errors.quantity = "Escolha pelo menos 1 ingresso.";
   }
-  if (seatIds.length > eventConfig.maxSeatsPerOrder) {
-    errors.seatIds = `Escolha no maximo ${eventConfig.maxSeatsPerOrder} assentos por compra.`;
+  if (quantity > eventConfig.maxSeatsPerOrder) {
+    errors.quantity = `Escolha no maximo ${eventConfig.maxSeatsPerOrder} ingressos por compra.`;
+  }
+  if (!eventConfig.ticketTypes[ticketType as TicketTypeId]) {
+    errors.ticketType = "Escolha um tipo de ingresso valido.";
   }
 
   return {
@@ -51,6 +61,8 @@ export function validateBuyer(input: {
       buyerPhone,
       buyerCpf,
       buyerEmail,
+      ticketType: ticketType as TicketTypeId,
+      quantity,
       seatIds,
       seatId: seatIds[0] ?? ""
     }

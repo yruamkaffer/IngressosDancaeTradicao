@@ -57,14 +57,15 @@ export function buildWhatsAppUrl(input: {
   seatLabels?: string[];
   reservationCode: string;
 }) {
-  const labels = input.seatLabels?.length ? input.seatLabels.join(", ") : input.seatLabel ?? "";
+  const count = input.seatLabels?.length ?? (input.seatLabel ? 1 : 0);
   const message = [
     `Ola! Fiz a reserva do ingresso para ${eventConfig.name}.`,
     `Nome: ${input.buyerName}`,
     `CPF: ${maskCpf(input.buyerCpf)}`,
     `Telefone: ${formatPhone(input.buyerPhone)}`,
     input.buyerEmail ? `Email: ${input.buyerEmail}` : null,
-    `Assentos: ${labels}`,
+    `Ingressos: ${count || "Nao informado"}`,
+    eventConfig.arrivalNotice,
     `Codigo da reserva: ${input.reservationCode}`,
     "Segue o comprovante do Pix."
   ]

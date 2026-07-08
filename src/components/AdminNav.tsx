@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 const items = [
   { href: "/admin", label: "Dashboard", icon: BarChart3 },
   { href: "/admin/reservas", label: "Reservas", icon: TicketCheck },
-  { href: "/admin/assentos", label: "Assentos", icon: Armchair },
+  { href: "/admin/assentos", label: "Capacidade", icon: Armchair },
   { href: "/admin/validar", label: "Validar", icon: SearchCheck }
 ];
 

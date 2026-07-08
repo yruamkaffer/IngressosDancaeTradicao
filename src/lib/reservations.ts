@@ -13,6 +13,14 @@ export type ReservationBundle = {
   orderIds: string[];
   seatLabels: string[];
   ticketCodes: string[];
+  ticketItems: Array<{
+    orderId: string;
+    ticketCode: string;
+    ticketType: string;
+    ticketTypeLabel: string;
+    ticketPrice: number;
+    ticketPriceFormatted: string;
+  }>;
   seatCount: number;
   total: number;
   totalFormatted: string;
@@ -25,6 +33,8 @@ type ReservationOrder = {
   buyer_phone: string;
   buyer_cpf: string;
   buyer_email: string | null;
+  ticket_type?: string | null;
+  ticket_price?: number | string | null;
   reservation_code: string;
   status: string;
   created_at: string;
@@ -58,11 +68,35 @@ function buildReservationBundle(orders: ReservationOrder[]): ReservationBundle |
   const ticketCodes = orders
     .map((order) => relationTicketCode(order.tickets))
     .filter(Boolean) as string[];
+  const ticketItems = orders.map((order) => {
+    const ticketType = order.ticket_type ?? "full";
+    const ticketConfig =
+      ticketType === "half"
+        ? eventConfig.ticketTypes.half
+        : ticketType === "courtesy"
+          ? eventConfig.ticketTypes.courtesy
+          : eventConfig.ticketTypes.full;
+    const ticketPrice =
+      typeof order.ticket_price === "number"
+        ? order.ticket_price
+        : order.ticket_price
+          ? Number(order.ticket_price)
+          : ticketConfig.price;
+
+    return {
+      orderId: order.id,
+      ticketCode: relationTicketCode(order.tickets) ?? "Gerado apos confirmacao",
+      ticketType,
+      ticketTypeLabel: ticketConfig.label,
+      ticketPrice,
+      ticketPriceFormatted: formatCurrency(ticketPrice)
+    };
+  });
 
   const allPaid = orders.every((order) => order.status === "paid");
   const allCancelled = orders.every((order) => order.status === "cancelled");
   const status = allPaid ? "paid" : allCancelled ? "cancelled" : "pending_payment";
-  const total = orders.length * eventConfig.ticketPrice;
+  const total = ticketItems.reduce((sum, item) => sum + item.ticketPrice, 0);
 
   return {
     reservationCode: firstOrder.reservation_code,
@@ -74,6 +108,7 @@ function buildReservationBundle(orders: ReservationOrder[]): ReservationBundle |
     orderIds: orders.map((order) => order.id),
     seatLabels,
     ticketCodes,
+    ticketItems,
     seatCount: orders.length,
     total,
     totalFormatted: formatCurrency(total),
@@ -91,7 +126,7 @@ export async function getReservationBundle(reservationCode: string): Promise<Res
 
   const { data, error } = await supabase
     .from("orders")
-    .select("id,buyer_name,buyer_phone,buyer_cpf,buyer_email,reservation_code,status,created_at,seats(label),tickets(ticket_code)")
+    .select("id,buyer_name,buyer_phone,buyer_cpf,buyer_email,ticket_type,ticket_price,reservation_code,status,created_at,seats(label),tickets(ticket_code)")
     .ilike("reservation_code", code)
     .order("created_at", { ascending: true });
 

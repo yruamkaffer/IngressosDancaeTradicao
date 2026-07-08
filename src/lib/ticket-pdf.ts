@@ -2,6 +2,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { eventConfig } from "@/config/event";
 import type { ReservationBundle } from "@/lib/reservations";
+import { buildTicketQrModules } from "@/lib/ticket-qr";
 
 type PdfImage = {
   bytes: Buffer;
@@ -37,6 +38,37 @@ function image(name: string, x: number, y: number, width: number, height: number
 
 function lineText(lines: string[], x: number, startY: number, size: number, gap: number, font = "F1", color = "0.09 0.08 0.16") {
   return lines.map((line, index) => text(x, startY - index * gap, size, line, font, color)).join("\n");
+}
+
+function fitText(value: string, maxLength: number) {
+  return value.length > maxLength ? `${value.slice(0, Math.max(maxLength - 3, 0))}...` : value;
+}
+
+function qrCode(x: number, y: number, size: number, item: ReservationBundle["ticketItems"][number], bundle: ReservationBundle) {
+  const qr = buildTicketQrModules({
+    ticketCode: item.ticketCode,
+    reservationCode: bundle.reservationCode,
+    buyerName: bundle.buyerName,
+    buyerCpf: bundle.buyerCpf,
+    buyerPhone: bundle.buyerPhone,
+    ticketType: item.ticketType,
+    ticketTypeLabel: item.ticketTypeLabel,
+    ticketPrice: item.ticketPrice
+  });
+  const cell = size / qr.size;
+  const commands = [rect(x, y, size, size, "1 1 1")];
+
+  qr.data.forEach((active, index) => {
+    if (!active) {
+      return;
+    }
+
+    const col = index % qr.size;
+    const row = Math.floor(index / qr.size);
+    commands.push(rect(x + col * cell, y + (qr.size - row - 1) * cell, cell + 0.05, cell + 0.05, "0.04 0.09 0.25"));
+  });
+
+  return commands.join("\n");
 }
 
 function getJpegDimensions(bytes: Buffer) {
@@ -111,12 +143,23 @@ function buildPdf(objects: Buffer[]) {
 
 export function buildTicketPdf(bundle: ReservationBundle) {
   const logo = loadLogo();
-  const seats = bundle.seatLabels.join(", ");
-  const tickets = bundle.ticketCodes.length > 0 ? bundle.ticketCodes : ["Gerado apos confirmacao"];
-  const ticketLines = tickets.map((ticket, index) => `Ticket ${index + 1}: ${ticket}`);
   const logoAspect = logo ? logo.width / logo.height : 1;
   const logoWidth = 136;
   const logoHeight = Math.min(52, logoWidth / logoAspect);
+  const ticketCards = bundle.ticketItems.flatMap((item, index) => {
+    const column = index % 2;
+    const row = Math.floor(index / 2);
+    const x = column === 0 ? 42 : 307;
+    const y = 406 - row * 74;
+
+    return [
+      rect(x, y, 246, 64, "1 1 1"),
+      qrCode(x + 9, y + 7, 50, item, bundle),
+      text(x + 68, y + 48, 8, `TICKET ${index + 1}`, "F2", "0.29 0.11 0.56"),
+      text(x + 68, y + 33, 10, fitText(item.ticketCode, 22), "F3", "0.04 0.09 0.25"),
+      text(x + 68, y + 18, 8, fitText(`${item.ticketTypeLabel} - ${item.ticketPriceFormatted}`, 31), "F1", "0.31 0.31 0.42")
+    ];
+  });
 
   const content = [
     rect(0, 0, 595, 842, "0.97 0.98 1"),
@@ -135,29 +178,23 @@ export function buildTicketPdf(bundle: ReservationBundle) {
     text(362, 680, 9, "VALOR TOTAL", "F2", "0.29 0.11 0.56"),
     text(362, 658, 18, bundle.totalFormatted, "F2", "0.04 0.09 0.25"),
 
-    rect(42, 474, 246, 132, "1 1 1"),
-    rect(307, 474, 246, 132, "1 1 1"),
-    text(62, 578, 11, "Comprador", "F2", "0.15 0.39 0.92"),
-    text(62, 552, 16, bundle.buyerName, "F2"),
-    text(62, 528, 10, `Email: ${bundle.buyerEmail || "Nao informado"}`),
-    text(62, 510, 10, `Telefone: ${bundle.buyerPhone}`),
-    text(327, 578, 11, "Assentos", "F2", "0.15 0.39 0.92"),
-    text(327, 552, 17, seats, "F2"),
-    text(327, 528, 10, `${bundle.seatCount} ingresso(s) para apresentacao presencial.`),
+    rect(42, 548, 246, 72, "1 1 1"),
+    rect(307, 548, 246, 72, "1 1 1"),
+    text(62, 594, 11, "Comprador", "F2", "0.15 0.39 0.92"),
+    text(62, 573, 13, fitText(bundle.buyerName, 30), "F2"),
+    text(62, 555, 9, fitText(`Email: ${bundle.buyerEmail || "Nao informado"}`, 38)),
+    text(327, 594, 11, "Entrada", "F2", "0.15 0.39 0.92"),
+    text(327, 573, 12, `${bundle.seatCount} ingresso(s) - lugares por chegada`, "F2"),
+    text(327, 555, 9, "Chegue cedo para garantir bons lugares."),
 
-    rect(42, 316, 511, 112, "0.94 0.96 1"),
-    rect(42, 316, 511, 7, "0.49 0.23 0.93"),
-    text(62, 398, 12, "Codigos dos tickets", "F2", "0.29 0.11 0.56"),
-    lineText(ticketLines, 62, 372, 12, 20, "F3", "0.04 0.09 0.25"),
+    rect(42, 486, 511, 42, "0.94 0.96 1"),
+    text(62, 510, 11, "Assentos nao numerados", "F2", "0.29 0.11 0.56"),
+    text(62, 494, 9, "A distribuicao dos lugares sera feita por ordem de chegada ao evento."),
 
-    rect(42, 214, 511, 62, "1 1 1"),
-    text(62, 250, 12, "Orientacao de entrada", "F2", "0.15 0.39 0.92"),
-    text(62, 229, 10, "Apresente este PDF no acesso ao teatro. Cada codigo de ticket e individual."),
+    text(42, 456, 12, "Tickets e QR Codes para catraca", "F2", "0.29 0.11 0.56"),
+    ...ticketCards,
 
-    text(42, 154, 10, eventConfig.studioName, "F2", "0.04 0.09 0.25"),
-    text(42, 136, 9, eventConfig.school.address, "F1", "0.31 0.31 0.42"),
-    text(42, 120, 9, `Contato: ${eventConfig.school.phone}`, "F1", "0.31 0.31 0.42"),
-    text(42, 82, 8, "Documento gerado automaticamente apos confirmacao manual do pagamento.", "F1", "0.43 0.43 0.54")
+    text(42, 34, 8, `${eventConfig.studioName} | ${eventConfig.school.address} | Contato: ${eventConfig.school.phone}`, "F1", "0.31 0.31 0.42")
   ].join("\n");
 
   const contentBuffer = Buffer.from(content, "latin1");

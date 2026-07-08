@@ -52,6 +52,15 @@ async function getOrders() {
     const first = orders[0];
     const seatLabels = orders.map((order) => relationLabel(order.seats)).filter(Boolean);
     const ticketCodes = orders.map((order) => relationTicketCode(order.tickets)).filter(Boolean) as string[];
+    const ticketTypeCounts = new Map<string, number>();
+    let total = 0;
+
+    for (const order of orders) {
+      const ticketType = order.ticket_type === "half" ? "half" : order.ticket_type === "courtesy" ? "courtesy" : "full";
+      const ticketConfig = eventConfig.ticketTypes[ticketType];
+      ticketTypeCounts.set(ticketConfig.label, (ticketTypeCounts.get(ticketConfig.label) ?? 0) + 1);
+      total += Number(order.ticket_price ?? ticketConfig.price);
+    }
 
     return {
       id: first.id,
@@ -61,8 +70,12 @@ async function getOrders() {
       buyerEmail: first.buyer_email ?? "",
       buyerCpfMasked: maskCpf(first.buyer_cpf),
       buyerCpfHash: hashCpf(first.buyer_cpf),
-      seatLabel: seatLabels.join(", "),
+      seatLabel: seatLabels.length > 0 ? seatLabels.join(", ") : "Controle interno",
       seatCount: orders.length,
+      ticketTypes: Array.from(ticketTypeCounts.entries())
+        .map(([label, count]) => `${count}x ${label}`)
+        .join(", "),
+      total,
       status: groupedStatus(orders.map((order) => order.status)),
       ticketCode: ticketCodes.join(", ") || null,
       createdAt: first.created_at
@@ -72,5 +85,5 @@ async function getOrders() {
 
 export default async function AdminReservasPage() {
   const orders = await getOrders();
-  return <AdminReservationsClient orders={orders} ticketPrice={eventConfig.ticketPrice} />;
+  return <AdminReservationsClient orders={orders} />;
 }

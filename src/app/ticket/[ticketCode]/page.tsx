@@ -1,11 +1,13 @@
-import { CalendarDays, MapPin, QrCode, TicketCheck } from "lucide-react";
+import { CalendarDays, MapPin, TicketCheck } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
 import { eventConfig } from "@/config/event";
 import { formatCurrency, formatDate, formatPhone, maskCpf } from "@/lib/format";
-import { firstRelation, relationLabel } from "@/lib/supabase/relations";
+import { firstRelation } from "@/lib/supabase/relations";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { buildTicketQrSvgDataUrl } from "@/lib/ticket-qr";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +16,7 @@ async function getTicket(ticketCode: string) {
   const { data, error } = await supabase
     .from("tickets")
     .select(
-      "id,ticket_code,used_at,created_at,orders(id,buyer_name,buyer_phone,buyer_cpf,reservation_code,status,seats(label))"
+      "id,ticket_code,used_at,created_at,orders(id,buyer_name,buyer_phone,buyer_cpf,ticket_type,ticket_price,reservation_code,status,seats(label))"
     )
     .eq("ticket_code", ticketCode.toUpperCase())
     .maybeSingle();
@@ -38,6 +40,20 @@ export default async function TicketPage({ params }: { params: { ticketCode: str
   if (!order) {
     notFound();
   }
+
+  const ticketType = order.ticket_type === "half" ? "half" : order.ticket_type === "courtesy" ? "courtesy" : "full";
+  const ticketConfig = eventConfig.ticketTypes[ticketType];
+  const ticketPrice = Number(order.ticket_price ?? ticketConfig.price);
+  const qrCode = await buildTicketQrSvgDataUrl({
+    ticketCode: ticket.ticket_code,
+    reservationCode: order.reservation_code,
+    buyerName: order.buyer_name,
+    buyerCpf: order.buyer_cpf,
+    buyerPhone: order.buyer_phone,
+    ticketType,
+    ticketTypeLabel: ticketConfig.label,
+    ticketPrice
+  });
 
   return (
     <main className="container-page flex min-h-screen items-center py-8">
@@ -72,8 +88,8 @@ export default async function TicketPage({ params }: { params: { ticketCode: str
                 <dd className="font-bold text-ink">{formatPhone(order.buyer_phone)}</dd>
               </div>
               <div>
-                <dt className="text-sm font-bold uppercase text-ink/55">Assento</dt>
-                <dd className="font-bold text-ink">{relationLabel(order.seats)}</dd>
+                <dt className="text-sm font-bold uppercase text-ink/55">Entrada</dt>
+                <dd className="font-bold text-ink">Por ordem de chegada</dd>
               </div>
               <div>
                 <dt className="text-sm font-bold uppercase text-ink/55">Reserva</dt>
@@ -81,9 +97,17 @@ export default async function TicketPage({ params }: { params: { ticketCode: str
               </div>
               <div>
                 <dt className="text-sm font-bold uppercase text-ink/55">Valor</dt>
-                <dd className="font-bold text-ink">{formatCurrency(eventConfig.ticketPrice)}</dd>
+                <dd className="font-bold text-ink">{formatCurrency(ticketPrice)}</dd>
+              </div>
+              <div className="sm:col-span-2">
+                <dt className="text-sm font-bold uppercase text-ink/55">Tipo de ingresso</dt>
+                <dd className="font-bold text-ink">{ticketConfig.label}</dd>
               </div>
             </dl>
+
+            <p className="mt-5 rounded-lg border border-brass/35 bg-brass/15 p-3 text-sm font-bold leading-6 text-ink">
+              {eventConfig.arrivalNotice}
+            </p>
 
             <div className="mt-6 grid gap-3 text-sm text-ink/72 sm:grid-cols-2">
               <div className="flex items-center gap-2">
@@ -99,7 +123,14 @@ export default async function TicketPage({ params }: { params: { ticketCode: str
 
           <aside className="border-t border-line bg-mist p-6 md:border-l md:border-t-0">
             <div className="flex aspect-square items-center justify-center rounded-lg border border-line bg-white">
-              <QrCode className="h-24 w-24 text-curtain" />
+              <Image
+                src={qrCode}
+                alt={`QR Code do ticket ${ticket.ticket_code}`}
+                width={260}
+                height={260}
+                unoptimized
+                className="h-full w-full p-3"
+              />
             </div>
             <div className="mt-4 break-all text-center text-lg font-black text-ink">{ticket.ticket_code}</div>
             <p className="mt-2 text-center text-xs text-ink/60">Valide este código na entrada.</p>

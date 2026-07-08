@@ -25,7 +25,8 @@ export async function sendTicketEmail(bundle: ReservationBundle) {
         <div style="font-family:Arial,sans-serif;color:#17142a;line-height:1.5">
           <h1>${eventConfig.name}</h1>
           <p>O pagamento da reserva <strong>${bundle.reservationCode}</strong> foi confirmado.</p>
-          <p><strong>Assentos:</strong> ${bundle.seatLabels.join(", ")}</p>
+          <p><strong>Ingressos:</strong> ${bundle.seatCount}</p>
+          <p>${eventConfig.arrivalNotice}</p>
           <p>O PDF do ticket esta anexado a este email.</p>
         </div>
       `,

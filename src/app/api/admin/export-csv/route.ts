@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id,buyer_name,buyer_phone,buyer_cpf,buyer_email,reservation_code,status,created_at,seats(label),tickets(ticket_code,used_at)"
+      "id,buyer_name,buyer_phone,buyer_cpf,buyer_email,ticket_type,ticket_price,reservation_code,status,created_at,seats(label),tickets(ticket_code,used_at)"
     )
     .eq("event_id", eventConfig.id)
     .eq("status", "paid")
@@ -40,12 +40,16 @@ export async function GET(request: NextRequest) {
     "telefone",
     "email",
     "cpf_mascarado",
-    "assento",
+    "tipo_ingresso",
+    "controle_interno",
     "valor",
     "criado_em"
   ];
 
   const rows = (data ?? []).map((order) => {
+    const ticketType = order.ticket_type === "half" ? "half" : order.ticket_type === "courtesy" ? "courtesy" : "full";
+    const ticketConfig = eventConfig.ticketTypes[ticketType];
+
     return [
       order.reservation_code,
       relationTicketCode(order.tickets) ?? "",
@@ -53,8 +57,9 @@ export async function GET(request: NextRequest) {
       formatPhone(order.buyer_phone),
       order.buyer_email ?? "",
       maskCpf(order.buyer_cpf),
+      ticketConfig.label,
       relationLabel(order.seats),
-      eventConfig.ticketPrice.toFixed(2),
+      Number(order.ticket_price ?? ticketConfig.price).toFixed(2),
       order.created_at
     ].map(csvCell);
   });

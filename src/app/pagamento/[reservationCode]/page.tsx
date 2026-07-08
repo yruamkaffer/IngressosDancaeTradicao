@@ -1,4 +1,5 @@
 import { ArrowLeft, Download, Home, MessageCircle, TicketCheck } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/CopyButton";
@@ -17,7 +18,7 @@ async function getReservation(reservationCode: string) {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id,buyer_name,buyer_phone,buyer_cpf,buyer_email,reservation_code,status,created_at,seats(label,status),tickets(ticket_code)"
+      "id,buyer_name,buyer_phone,buyer_cpf,buyer_email,ticket_type,ticket_price,reservation_code,status,created_at,seats(label,status),tickets(ticket_code)"
     )
     .eq("event_id", eventConfig.id)
     .ilike("reservation_code", reservationCode.trim().toUpperCase())
@@ -48,7 +49,9 @@ export default async function PagamentoPage({
   const allPaid = orders.every((order) => order.status === "paid");
   const allCancelled = orders.every((order) => order.status === "cancelled");
   const status = allPaid ? "paid" : allCancelled ? "cancelled" : "pending_payment";
-  const total = orders.length * eventConfig.ticketPrice;
+  const firstTicketType = firstOrder.ticket_type === "half" ? "half" : firstOrder.ticket_type === "courtesy" ? "courtesy" : "full";
+  const ticketConfig = eventConfig.ticketTypes[firstTicketType];
+  const total = orders.reduce((sum, order) => sum + Number(order.ticket_price ?? ticketConfig.price), 0);
 
   const whatsappUrl = buildWhatsAppUrl({
     buyerName: firstOrder.buyer_name,
@@ -107,7 +110,14 @@ export default async function PagamentoPage({
             <div className="rounded-lg border border-line bg-mist p-4">
               <dt className="text-sm font-bold uppercase text-ink/55">Reserva</dt>
               <dd className="mt-1 font-bold text-ink">{firstOrder.reservation_code}</dd>
-              <dd className="text-sm text-ink/65">{orders.length} assento(s): {seatLabels.join(", ")}</dd>
+              <dd className="text-sm text-ink/65">
+                {orders.length} ingresso(s) {ticketConfig.label.toLowerCase()}
+              </dd>
+            </div>
+            <div className="rounded-lg border border-line bg-mist p-4 sm:col-span-2">
+              <dt className="text-sm font-bold uppercase text-ink/55">Assentos</dt>
+              <dd className="mt-1 font-bold text-ink">Distribuicao por ordem de chegada</dd>
+              <dd className="text-sm text-ink/65">{eventConfig.arrivalNotice}</dd>
             </div>
             <div className="rounded-lg border border-line bg-mist p-4">
               <dt className="text-sm font-bold uppercase text-ink/55">Valor total</dt>
@@ -120,17 +130,22 @@ export default async function PagamentoPage({
           </dl>
 
           <div className="mt-6 rounded-lg border border-brass/35 bg-brass/15 p-4 text-sm leading-6 text-ink">
-            {eventConfig.pixInstructions} Seu ingresso so sera confirmado apos envio do comprovante e validacao manual.
+            {eventConfig.pixInstructions} Seu ingresso sera liberado apos a confirmacao pela organizacao.
           </div>
         </section>
 
         <aside className="card h-fit p-5">
-          <h2 className="text-xl font-bold text-ink">Dados do Pix</h2>
-          <img
-            src={eventConfig.pixQrCodeImage}
-            alt="QR Code Pix"
+          <h2 className="text-xl font-bold text-ink">Pix {ticketConfig.label}</h2>
+          <Image
+            src={ticketConfig.pixQrCodeImage}
+            alt={`QR Code Pix ${ticketConfig.label}`}
+            width={640}
+            height={640}
             className="mt-4 aspect-square w-full rounded-lg border border-line bg-white object-contain p-3"
           />
+          <div className="mt-3 rounded-lg border border-curtain/20 bg-curtain/10 p-3 text-sm font-bold text-curtain">
+            Valor deste pedido: {formatCurrency(total)}
+          </div>
           <div className="mt-4 rounded-lg border border-line bg-mist p-3">
             <div className="text-xs font-bold uppercase text-ink/55">Chave Pix</div>
             <div className="break-all font-bold text-ink">{eventConfig.pixKey}</div>

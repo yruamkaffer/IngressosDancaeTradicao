@@ -3,6 +3,7 @@
 import { Download, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/format";
+import { CourtesyTicketForm } from "./CourtesyTicketForm";
 import { ReservationActions } from "./ReservationActions";
 import { StatusBadge } from "./StatusBadge";
 
@@ -16,6 +17,8 @@ export type AdminReservationRow = {
   buyerCpfHash: string;
   seatLabel: string;
   seatCount: number;
+  ticketTypes: string;
+  total: number;
   status: string;
   ticketCode: string | null;
   createdAt: string;
@@ -30,11 +33,9 @@ async function sha256(value: string) {
 }
 
 export function AdminReservationsClient({
-  orders,
-  ticketPrice
+  orders
 }: {
   orders: AdminReservationRow[];
-  ticketPrice: number;
 }) {
   const [query, setQuery] = useState("");
   const [cpfHash, setCpfHash] = useState("");
@@ -73,6 +74,7 @@ export function AdminReservationsClient({
         order.buyerEmail,
         order.reservationCode,
         order.seatLabel,
+        order.ticketTypes,
         order.ticketCode ?? ""
       ]
         .join(" ")
@@ -119,6 +121,8 @@ export function AdminReservationsClient({
         </label>
       </section>
 
+      <CourtesyTicketForm />
+
       <div className="grid gap-4 md:grid-cols-3">
         <div className="card p-4">
           <div className="text-sm font-bold uppercase text-ink/55">Resultado</div>
@@ -142,6 +146,7 @@ export function AdminReservationsClient({
                 <th>Reserva</th>
                 <th>Comprador</th>
                 <th>Assentos</th>
+                <th>Tipo</th>
                 <th>Status</th>
                 <th>Tickets</th>
                 <th>Valor</th>
@@ -163,11 +168,12 @@ export function AdminReservationsClient({
                     <div className="text-sm text-ink/65">{order.buyerCpfMasked}</div>
                   </td>
                   <td className="max-w-[260px] font-bold text-ink">{order.seatLabel}</td>
+                  <td className="max-w-[180px] text-sm font-bold text-ink">{order.ticketTypes}</td>
                   <td>
                     <StatusBadge status={order.status} />
                   </td>
                   <td className="max-w-[220px] text-sm">{order.ticketCode ?? "-"}</td>
-                  <td>{order.status === "paid" ? formatCurrency(ticketPrice * order.seatCount) : "-"}</td>
+                  <td>{formatCurrency(order.total)}</td>
                   <td>
                     {order.status === "pending_payment" ? (
                       <ReservationActions orderId={order.id} showDelete />
@@ -187,7 +193,7 @@ export function AdminReservationsClient({
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center text-ink/60">
+                  <td colSpan={8} className="text-center text-ink/60">
                     Nenhuma reserva encontrada.
                   </td>
                 </tr>

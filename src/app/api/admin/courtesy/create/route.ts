@@ -1,17 +1,24 @@
-import { eventConfig } from "@/config/event";
+import { requestHasAdminSession } from "@/lib/admin-auth";
 import { fail, friendlyDatabaseError, ok } from "@/lib/api";
+import { getReservationBundle } from "@/lib/reservations";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { sendTicketEmail } from "@/lib/ticket-email";
 import { validateBuyer } from "@/lib/validation";
+import { eventConfig } from "@/config/event";
 import type { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  if (!requestHasAdminSession(request)) {
+    return fail("Nao autorizado.", 401);
+  }
+
   const body = await request.json().catch(() => null);
 
   if (!body || typeof body !== "object") {
-    return fail("Envie os dados da reserva.");
+    return fail("Envie os dados da cortesia.");
   }
 
   const parsed = validateBuyer({
@@ -19,31 +26,20 @@ export async function POST(request: NextRequest) {
     buyerPhone: body.buyerPhone,
     buyerCpf: body.buyerCpf,
     buyerEmail: body.buyerEmail,
-    ticketType: body.ticketType,
-    quantity: typeof body.quantity === "number" ? body.quantity : Number(body.quantity),
-    seatIds: Array.isArray(body.seatIds) ? body.seatIds : undefined,
-    seatId: body.seatId
+    ticketType: "courtesy",
+    quantity: typeof body.quantity === "number" ? body.quantity : Number(body.quantity)
   });
 
   if (!parsed.ok) {
     return fail("Revise os campos obrigatorios.", 422, parsed.errors);
   }
 
-  if (body.eventId && body.eventId !== eventConfig.id) {
-    return fail("Evento invalido.", 422);
-  }
-
-  if (parsed.data.ticketType === "courtesy") {
-    return fail("Cortesia so pode ser gerada pela escola no painel admin.", 403);
-  }
-
   const supabase = getSupabaseAdmin();
-  const ticket = eventConfig.ticketTypes[parsed.data.ticketType];
   const { data, error } = await supabase.rpc("reserve_tickets_by_quantity", {
     p_event_id: eventConfig.id,
     p_quantity: parsed.data.quantity,
-    p_ticket_type: parsed.data.ticketType,
-    p_ticket_price: ticket.price,
+    p_ticket_type: "courtesy",
+    p_ticket_price: 0,
     p_buyer_name: parsed.data.buyerName,
     p_buyer_phone: parsed.data.buyerPhone,
     p_buyer_cpf: parsed.data.buyerCpf,
@@ -51,23 +47,33 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
-    const status = error.message.includes("SEAT_NOT_AVAILABLE") ? 409 : 400;
-    return fail(friendlyDatabaseError(error.message), status, error.message);
+    return fail(friendlyDatabaseError(error.message), 400, error.message);
   }
 
   const reservations = Array.isArray(data) ? data : data ? [data] : [];
   const firstReservation = reservations[0];
+
   if (!firstReservation) {
-    return fail("Nao foi possivel criar a reserva.", 500);
+    return fail("Nao foi possivel criar a cortesia.", 500);
   }
+
+  const { data: tickets, error: confirmError } = await supabase.rpc("confirm_reservation_payment", {
+    p_order_id: firstReservation.order_id
+  });
+
+  if (confirmError) {
+    return fail(friendlyDatabaseError(confirmError.message), 400, confirmError.message);
+  }
+
+  const rows = Array.isArray(tickets) ? tickets : tickets ? [tickets] : [];
+  const bundle = await getReservationBundle(firstReservation.reservation_code);
+  const email = bundle ? await sendTicketEmail(bundle) : { ok: false, skipped: true, reason: "Reserva nao encontrada." };
 
   return ok(
     {
-      orderIds: reservations.map((reservation) => reservation.order_id),
       reservationCode: firstReservation.reservation_code,
-      seatCount: reservations.length,
-      ticketType: parsed.data.ticketType,
-      total: reservations.length * ticket.price
+      ticketCodes: rows.map((row) => row.ticket_code).filter(Boolean),
+      email
     },
     { status: 201 }
   );

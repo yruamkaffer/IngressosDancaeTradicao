@@ -18,7 +18,7 @@ export async function GET(
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id,event_id,seat_id,buyer_name,buyer_phone,buyer_cpf,buyer_email,reservation_code,status,created_at,updated_at,seats(id,label,row,number,status),tickets(id,ticket_code,used_at,created_at)"
+      "id,event_id,seat_id,buyer_name,buyer_phone,buyer_cpf,buyer_email,ticket_type,ticket_price,reservation_code,status,created_at,updated_at,seats(id,label,row,number,status),tickets(id,ticket_code,used_at,created_at)"
     )
     .eq("event_id", eventConfig.id)
     .eq("reservation_code", reservationCode)
@@ -37,6 +37,10 @@ export async function GET(
 
   const allPaid = orders.every((order) => order.status === "paid");
   const allCancelled = orders.every((order) => order.status === "cancelled");
+  const total = orders.reduce((sum, order) => {
+    const ticketType = order.ticket_type === "half" ? "half" : order.ticket_type === "courtesy" ? "courtesy" : "full";
+    return sum + Number(order.ticket_price ?? eventConfig.ticketTypes[ticketType].price);
+  }, 0);
 
   return ok({
     id: firstOrder.id,
@@ -47,6 +51,9 @@ export async function GET(
     buyerEmail: firstOrder.buyer_email,
     buyerCpfMasked: maskCpf(firstOrder.buyer_cpf),
     seats: orders.map((order) => firstRelation(order.seats)).filter(Boolean),
+    ticketType: firstOrder.ticket_type ?? "full",
+    ticketCount: orders.length,
+    total,
     ticketCodes: orders.map((order) => relationTicketCode(order.tickets)).filter(Boolean),
     createdAt: firstOrder.created_at
   });

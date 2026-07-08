@@ -1,5 +1,6 @@
 export type SeatStatus = "available" | "reserved" | "sold" | "blocked";
 export type OrderStatus = "pending_payment" | "paid" | "cancelled";
+export type TicketType = "full" | "half" | "courtesy";
 
 export type Seat = {
   id: string;
@@ -21,6 +22,8 @@ export type Order = {
   buyer_phone: string;
   buyer_cpf: string;
   buyer_email?: string | null;
+  ticket_type: TicketType;
+  ticket_price: number;
   reservation_code: string;
   status: OrderStatus;
   created_at: string;
