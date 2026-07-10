@@ -63,9 +63,14 @@ export function ReservationActions({
           type="button"
           onClick={() => run("confirm")}
           disabled={busy !== null}
+          aria-busy={busy === "confirm"}
           className="btn btn-primary min-h-10 px-3 py-2 text-sm"
         >
-          {busy === "confirm" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+          {busy === "confirm" ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+          )}
           Confirmar
         </button>
       )}
@@ -75,9 +80,14 @@ export function ReservationActions({
           type="button"
           onClick={() => run("cancel")}
           disabled={busy !== null}
+          aria-busy={busy === "cancel"}
           className="btn btn-danger min-h-10 px-3 py-2 text-sm"
         >
-          {busy === "cancel" ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+          {busy === "cancel" ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <XCircle className="h-4 w-4" aria-hidden="true" />
+          )}
           Cancelar
         </button>
       )}
@@ -87,9 +97,14 @@ export function ReservationActions({
           type="button"
           onClick={() => run("delete")}
           disabled={busy !== null}
+          aria-busy={busy === "delete"}
           className="btn btn-secondary min-h-10 px-3 py-2 text-sm text-rose hover:border-rose hover:text-rose"
         >
-          {busy === "delete" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          {busy === "delete" ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
+          )}
           Excluir
         </button>
       )}

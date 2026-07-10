@@ -58,18 +58,29 @@ export function ValidateTicketForm() {
             onChange={(event) => setTicketCode(event.target.value)}
             placeholder="TCK-..."
             autoComplete="off"
+            required
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? "ticket-validation-error" : undefined}
           />
         </label>
 
-        {error && <div className="mt-3 rounded-lg border border-rose/25 bg-rose/10 p-3 text-sm text-rose">{error}</div>}
+        {error && (
+          <div
+            id="ticket-validation-error"
+            role="alert"
+            className="mt-3 rounded-lg border border-rose/25 bg-rose/10 p-3 text-sm text-rose"
+          >
+            {error}
+          </div>
+        )}
 
-        <button type="submit" disabled={loading} className="btn btn-primary mt-5 w-full">
-          <SearchCheck className="h-4 w-4" />
+        <button type="submit" disabled={loading} aria-busy={loading} className="btn btn-primary mt-5 w-full">
+          <SearchCheck className="h-4 w-4" aria-hidden="true" />
           {loading ? "Validando..." : "Validar e marcar uso"}
         </button>
       </form>
 
-      <section className="card p-5">
+      <section className="card p-5" aria-live="polite">
         <h2 className="text-xl font-bold text-ink">Resultado</h2>
         {!result && <p className="mt-3 text-ink/65">A validação aparecerá aqui.</p>}
         {result && (

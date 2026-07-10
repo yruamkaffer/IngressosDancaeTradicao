@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { eventConfig } from "@/config/event";
 import { PurchaseClient } from "@/components/PurchaseClient";
@@ -6,6 +7,20 @@ import type { Seat } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+export const metadata: Metadata = {
+  title: "Comprar Ingresso",
+  description:
+    "Compre ingressos para Sob a Luz da Dança. Inteira ou promocional disponível para todos, pagamento via Pix e entrada por ordem de chegada.",
+  alternates: {
+    canonical: "/comprar"
+  },
+  openGraph: {
+    title: "Comprar Ingresso | Sob a Luz da Dança",
+    description:
+      "Ingresso promocional disponível para todos. Compra online via Pix para a mostra da Dança & Tradição."
+  }
+};
 
 async function getSeats() {
   return getEventSeatsWithEffectiveStatus();

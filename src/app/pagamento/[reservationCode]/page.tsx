@@ -1,4 +1,5 @@
 import { ArrowLeft, Download, Home, MessageCircle, TicketCheck } from "lucide-react";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -12,6 +13,14 @@ import { getSupabaseAdmin } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const runtime = "nodejs";
+
+export const metadata: Metadata = {
+  title: "Pagamento",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 async function getReservation(reservationCode: string) {
   const supabase = getSupabaseAdmin();

@@ -37,7 +37,7 @@ export function AdminLoginForm() {
     <form onSubmit={submit} className="card mx-auto w-full max-w-md p-6">
       <div className="mb-5 flex items-center gap-3">
         <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-curtain text-white">
-          <LockKeyhole className="h-5 w-5" />
+          <LockKeyhole className="h-5 w-5" aria-hidden="true" />
         </span>
         <div>
           <h1 className="text-2xl font-bold text-ink">Acesso admin</h1>
@@ -52,11 +52,18 @@ export function AdminLoginForm() {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           autoComplete="current-password"
+          required
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? "admin-login-error" : undefined}
         />
       </label>
-      {error && <div className="mt-3 rounded-lg border border-rose/25 bg-rose/10 p-3 text-sm text-rose">{error}</div>}
-      <button type="submit" disabled={loading} className="btn btn-primary mt-5 w-full">
-        <LogIn className="h-4 w-4" />
+      {error && (
+        <div id="admin-login-error" role="alert" className="mt-3 rounded-lg border border-rose/25 bg-rose/10 p-3 text-sm text-rose">
+          {error}
+        </div>
+      )}
+      <button type="submit" disabled={loading} aria-busy={loading} className="btn btn-primary mt-5 w-full">
+        <LogIn className="h-4 w-4" aria-hidden="true" />
         {loading ? "Entrando..." : "Entrar"}
       </button>
     </form>

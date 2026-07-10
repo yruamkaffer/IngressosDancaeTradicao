@@ -92,7 +92,7 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
         <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex items-center gap-3">
             <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-curtain text-white">
-              <UserRound className="h-5 w-5" />
+              <UserRound className="h-5 w-5" aria-hidden="true" />
             </span>
             <div>
               <h1 className="text-2xl font-bold text-ink">Comprar ingresso</h1>
@@ -103,7 +103,10 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
               </p>
             </div>
           </div>
-          <div className="rounded-md border border-line bg-mist px-4 py-3 text-sm text-ink/75 lg:max-w-md lg:text-right">
+          <div
+            className="rounded-md border border-line bg-mist px-4 py-3 text-sm text-ink/75 lg:max-w-md lg:text-right"
+            aria-live="polite"
+          >
             <div className="font-bold text-ink">Resumo</div>
             <div>
               {quantity} ingresso(s) {selectedTicket.label.toLowerCase()}
@@ -118,9 +121,9 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-          <section className="rounded-lg border border-line bg-white/70 p-4">
-            <div className="mb-3 flex items-center gap-2 font-bold text-ink">
-              <Ticket className="h-4 w-4 text-stage" />
+          <section className="rounded-lg border border-line bg-white/70 p-4" aria-labelledby="ticket-type-heading">
+            <div id="ticket-type-heading" className="mb-3 flex items-center gap-2 font-bold text-ink">
+              <Ticket className="h-4 w-4 text-stage" aria-hidden="true" />
               Tipo de ingresso
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -133,6 +136,8 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
                     key={type}
                     type="button"
                     onClick={() => setTicketType(type)}
+                    aria-pressed={active}
+                    aria-describedby={`ticket-type-${type}-description`}
                     className={`rounded-lg border p-4 text-left transition ${
                       active
                         ? "border-curtain bg-curtain text-white shadow-sm"
@@ -143,7 +148,10 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
                     <div className={`mt-2 text-2xl font-black ${active ? "text-white" : "text-curtain"}`}>
                       {formatCurrency(ticket.price)}
                     </div>
-                    <div className={`mt-1 text-sm ${active ? "text-white/75" : "text-ink/60"}`}>
+                    <div
+                      id={`ticket-type-${type}-description`}
+                      className={`mt-1 text-sm ${active ? "text-white/75" : "text-ink/60"}`}
+                    >
                       {type === "half"
                         ? "Qualquer pessoa pode comprar este ingresso. Não há exigência de comprovante."
                         : "Valor inteiro do ingresso."}
@@ -155,8 +163,10 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
             {errors.ticketType && <span className="mt-2 block text-sm text-rose">{errors.ticketType}</span>}
           </section>
 
-          <section className="rounded-lg border border-line bg-white/70 p-4">
-            <div className="text-sm font-bold uppercase text-ink/55">Quantidade</div>
+          <section className="rounded-lg border border-line bg-white/70 p-4" aria-labelledby="quantity-heading">
+            <div id="quantity-heading" className="text-sm font-bold uppercase text-ink/55">
+              Quantidade
+            </div>
             <div className="mt-3 grid grid-cols-[44px_1fr_44px] items-center gap-2">
               <button
                 type="button"
@@ -167,10 +177,16 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
                 <Minus className="h-4 w-4" />
               </button>
               <input
+                type="number"
                 className="input text-center text-lg font-black"
                 value={quantity}
                 onChange={(event) => updateQuantity(Number(event.target.value))}
                 inputMode="numeric"
+                min={1}
+                max={eventConfig.maxSeatsPerOrder}
+                aria-label="Quantidade de ingressos"
+                aria-describedby={`quantity-help${errors.quantity ? " quantity-error" : ""}`}
+                aria-invalid={Boolean(errors.quantity)}
               />
               <button
                 type="button"
@@ -181,8 +197,14 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
                 <Plus className="h-4 w-4" />
               </button>
             </div>
-            <p className="mt-2 text-xs text-ink/55">Limite: {eventConfig.maxSeatsPerOrder} ingressos por compra.</p>
-            {errors.quantity && <span className="mt-2 block text-sm text-rose">{errors.quantity}</span>}
+            <p id="quantity-help" className="mt-2 text-xs text-ink/55">
+              Limite: {eventConfig.maxSeatsPerOrder} ingressos por compra.
+            </p>
+            {errors.quantity && (
+              <span id="quantity-error" role="alert" className="mt-2 block text-sm text-rose">
+                {errors.quantity}
+              </span>
+            )}
           </section>
         </div>
 
@@ -194,8 +216,15 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
               value={buyerName}
               onChange={(event) => setBuyerName(event.target.value)}
               autoComplete="name"
+              required
+              aria-invalid={Boolean(errors.buyerName)}
+              aria-describedby={errors.buyerName ? "buyer-name-error" : undefined}
             />
-            {errors.buyerName && <span className="mt-1 block text-sm text-rose">{errors.buyerName}</span>}
+            {errors.buyerName && (
+              <span id="buyer-name-error" role="alert" className="mt-1 block text-sm text-rose">
+                {errors.buyerName}
+              </span>
+            )}
           </label>
 
           <label className="block">
@@ -207,8 +236,15 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
               inputMode="tel"
               autoComplete="tel"
               placeholder="DDD + número"
+              required
+              aria-invalid={Boolean(errors.buyerPhone)}
+              aria-describedby={errors.buyerPhone ? "buyer-phone-error" : undefined}
             />
-            {errors.buyerPhone && <span className="mt-1 block text-sm text-rose">{errors.buyerPhone}</span>}
+            {errors.buyerPhone && (
+              <span id="buyer-phone-error" role="alert" className="mt-1 block text-sm text-rose">
+                {errors.buyerPhone}
+              </span>
+            )}
           </label>
 
           <label className="block">
@@ -220,8 +256,15 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
               inputMode="numeric"
               autoComplete="off"
               placeholder="Somente números"
+              required
+              aria-invalid={Boolean(errors.buyerCpf)}
+              aria-describedby={errors.buyerCpf ? "buyer-cpf-error" : undefined}
             />
-            {errors.buyerCpf && <span className="mt-1 block text-sm text-rose">{errors.buyerCpf}</span>}
+            {errors.buyerCpf && (
+              <span id="buyer-cpf-error" role="alert" className="mt-1 block text-sm text-rose">
+                {errors.buyerCpf}
+              </span>
+            )}
           </label>
 
           <label className="block lg:col-span-2">
@@ -234,14 +277,21 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
               type="email"
               autoComplete="email"
               placeholder="seuemail@exemplo.com"
+              required
+              aria-invalid={Boolean(errors.buyerEmail)}
+              aria-describedby={errors.buyerEmail ? "buyer-email-error" : undefined}
             />
-            {errors.buyerEmail && <span className="mt-1 block text-sm text-rose">{errors.buyerEmail}</span>}
+            {errors.buyerEmail && (
+              <span id="buyer-email-error" role="alert" className="mt-1 block text-sm text-rose">
+                {errors.buyerEmail}
+              </span>
+            )}
           </label>
 
           <div className="flex items-end lg:col-span-2">
             <div className="w-full rounded-lg border border-line bg-white/70 p-3 text-sm leading-6 text-ink/65">
               <div className="mb-1 flex items-center gap-2 font-bold text-ink">
-                <Mail className="h-4 w-4 text-stage" />
+                <Mail className="h-4 w-4 text-stage" aria-hidden="true" />
                 Envio do ticket
               </div>
               O PDF será enviado para este email após a confirmação do pagamento pela organização.
@@ -251,15 +301,26 @@ export function PurchaseClient({ initialSeats }: { initialSeats: Seat[] }) {
 
         <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-stretch">
           {message ? (
-            <div className="rounded-lg border border-rose/25 bg-rose/10 p-3 text-sm text-rose">{message}</div>
+            <div role="alert" className="rounded-lg border border-rose/25 bg-rose/10 p-3 text-sm text-rose">
+              {message}
+            </div>
           ) : (
             <div className="rounded-lg border border-line bg-white/70 p-3 text-sm text-ink/65">
               {eventConfig.pixInstructions}
             </div>
           )}
 
-          <button type="submit" disabled={loading || availableCount <= 0} className="btn btn-primary min-h-[52px] w-full">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+          <button
+            type="submit"
+            disabled={loading || availableCount <= 0}
+            aria-busy={loading}
+            className="btn btn-primary min-h-[52px] w-full"
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            )}
             Ir para o Pix
           </button>
         </div>

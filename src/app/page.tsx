@@ -3,10 +3,61 @@ import Image from "next/image";
 import Link from "next/link";
 import { eventConfig } from "@/config/event";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { absoluteUrl } from "@/lib/site";
 
 export default function HomePage() {
+  const eventJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: eventConfig.name,
+    description: eventConfig.description,
+    startDate: `${eventConfig.date}T${eventConfig.time}:00-03:00`,
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    eventStatus: "https://schema.org/EventScheduled",
+    image: [absoluteUrl(eventConfig.heroImage), absoluteUrl(eventConfig.studioLogoImage)],
+    url: absoluteUrl("/"),
+    location: {
+      "@type": "Place",
+      name: eventConfig.location,
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: eventConfig.city,
+        addressRegion: "SC",
+        addressCountry: "BR"
+      }
+    },
+    organizer: {
+      "@type": "Organization",
+      name: eventConfig.studioName,
+      url: eventConfig.school.instagramUrl,
+      telephone: eventConfig.school.phone
+    },
+    offers: [
+      {
+        "@type": "Offer",
+        name: eventConfig.ticketTypes.full.label,
+        price: eventConfig.ticketTypes.full.price,
+        priceCurrency: "BRL",
+        availability: "https://schema.org/InStock",
+        url: absoluteUrl("/comprar")
+      },
+      {
+        "@type": "Offer",
+        name: eventConfig.ticketTypes.half.label,
+        price: eventConfig.ticketTypes.half.price,
+        priceCurrency: "BRL",
+        availability: "https://schema.org/InStock",
+        url: absoluteUrl("/comprar")
+      }
+    ]
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd).replace(/</g, "\\u003c") }}
+      />
       <main>
         <section
           className="relative flex min-h-[78vh] items-center overflow-hidden bg-ink text-white"

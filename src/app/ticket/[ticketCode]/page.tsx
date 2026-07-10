@@ -1,4 +1,5 @@
 import { CalendarDays, MapPin, TicketCheck } from "lucide-react";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -10,6 +11,14 @@ import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { buildTicketQrSvgDataUrl } from "@/lib/ticket-qr";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Ticket",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 async function getTicket(ticketCode: string) {
   const supabase = getSupabaseAdmin();
