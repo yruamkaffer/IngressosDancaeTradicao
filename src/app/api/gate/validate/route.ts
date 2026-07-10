@@ -18,7 +18,18 @@ function getBearerToken(request: NextRequest) {
     return token.trim();
   }
 
-  return request.headers.get("x-gate-api-key")?.trim() ?? "";
+  const headerKey = request.headers.get("x-gate-api-key")?.trim();
+
+  if (headerKey) {
+    return headerKey;
+  }
+
+  return (
+    request.nextUrl.searchParams.get("key") ??
+    request.nextUrl.searchParams.get("gateKey") ??
+    request.nextUrl.searchParams.get("apiKey") ??
+    ""
+  ).trim();
 }
 
 function ticketCodeFromQrPayload(value: string) {
@@ -46,6 +57,7 @@ function ticketCodeFromQrPayload(value: string) {
       url.searchParams.get("ticketCode") ??
       url.searchParams.get("ticket_code") ??
       url.searchParams.get("code") ??
+      url.searchParams.get("q") ??
       ""
     )
       .trim()
@@ -78,7 +90,47 @@ function getTicketCode(body: unknown) {
   return typeof qrPayload === "string" ? ticketCodeFromQrPayload(qrPayload) : "";
 }
 
-export async function POST(request: NextRequest) {
+function getTicketCodeFromSearchParams(request: NextRequest) {
+  const directCode =
+    request.nextUrl.searchParams.get("ticketCode") ??
+    request.nextUrl.searchParams.get("ticket_code") ??
+    request.nextUrl.searchParams.get("code") ??
+    request.nextUrl.searchParams.get("q");
+
+  if (directCode?.trim()) {
+    return directCode.trim().toUpperCase();
+  }
+
+  const qrPayload =
+    request.nextUrl.searchParams.get("qrPayload") ??
+    request.nextUrl.searchParams.get("payload") ??
+    request.nextUrl.searchParams.get("raw");
+
+  return qrPayload ? ticketCodeFromQrPayload(qrPayload) : "";
+}
+
+function getUsageResponse(request: NextRequest) {
+  return ok({
+    message: "API online da catraca ativa. Envie um ticket para validar a entrada.",
+    configured: Boolean(getGateApiKey()),
+    methods: {
+      post: {
+        url: "/api/gate/validate",
+        headers: {
+          authorization: "Bearer <GATE_API_KEY>"
+        },
+        body: {
+          ticketCode: "TCK-EXEMPLO"
+        }
+      },
+      get: {
+        url: `${request.nextUrl.origin}/api/gate/validate?ticketCode=TCK-EXEMPLO&key=<GATE_API_KEY>`
+      }
+    }
+  });
+}
+
+async function validateTicketCode(request: NextRequest, ticketCode: string) {
   const configuredKey = getGateApiKey();
 
   if (!configuredKey) {
@@ -88,9 +140,6 @@ export async function POST(request: NextRequest) {
   if (getBearerToken(request) !== configuredKey) {
     return fail("Nao autorizado.", 401);
   }
-
-  const body = await request.json().catch(() => null);
-  const ticketCode = getTicketCode(body);
 
   if (!ticketCode) {
     return fail("Informe ticketCode ou qrPayload.", 422);
@@ -171,4 +220,21 @@ export async function POST(request: NextRequest) {
       city: eventConfig.city
     }
   });
+}
+
+export async function GET(request: NextRequest) {
+  const ticketCode = getTicketCodeFromSearchParams(request);
+
+  if (!ticketCode) {
+    return getUsageResponse(request);
+  }
+
+  return validateTicketCode(request, ticketCode);
+}
+
+export async function POST(request: NextRequest) {
+  const body = await request.json().catch(() => null);
+  const ticketCode = getTicketCode(body);
+
+  return validateTicketCode(request, ticketCode);
 }

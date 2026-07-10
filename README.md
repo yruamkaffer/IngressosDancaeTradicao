@@ -364,6 +364,9 @@ Authorization: Bearer <GATE_API_KEY>
 Content-Type: application/json
 ```
 
+Opening `/api/gate/validate` in the browser returns a small JSON usage guide. A `405 Method Not Allowed`
+means the production deploy is still running an older version of this route.
+
 Request with ticket code:
 
 ```json
@@ -379,6 +382,15 @@ Request with raw QR payload:
   "qrPayload": "{\"ticketCode\":\"TCK-ABC1234567\"}"
 }
 ```
+
+For simpler gate devices that can only call a URL with `GET`, use:
+
+```http
+GET /api/gate/validate?ticketCode=TCK-ABC1234567&key=<GATE_API_KEY>
+```
+
+The same `GET` route also accepts `code`, `q`, `ticket_code`, `qrPayload`, `payload` or `raw`.
+Prefer the `POST` integration when possible, because it keeps `GATE_API_KEY` out of the URL.
 
 Allowed response:
 
@@ -477,6 +489,7 @@ Runs TypeScript type checking without emitting files.
 | `GET /api/seats` | Returns seats and their current status |
 | `POST /api/orders/create` | Creates a reservation |
 | `GET /api/orders/[reservationCode]` | Returns reservation information |
+| `GET /api/gate/validate` | Shows gate API usage or validates a ticket through query parameters |
 | `POST /api/gate/validate` | Validates a ticket for online turnstile/gate access |
 | `POST /api/admin/courtesy/create` | Creates and confirms courtesy tickets |
 | `POST /api/admin/orders/[id]/confirm-payment` | Confirms manual payment |
